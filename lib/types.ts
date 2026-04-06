@@ -41,6 +41,23 @@ export type Membre = {
   photo_url?: string;
 };
 
+export type TeamMember = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string | null;
+  active: boolean;
+  created_at: string;
+  roles: { id: string; name: string }[];
+};
+
+export type Role = {
+  id: string;
+  name: string;
+  description: string;
+};
+
 export type User = {
   id: string;
   email: string;

@@ -1,62 +1,106 @@
 export const dynamic = "force-dynamic";
 
-import { equipe } from "@/data/equipe";
-import ImageWithFallback from "@/components/ImageWithFallback";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
+import { fetchTeamMembers } from "@/lib/api";
+import { removeMemberAction } from "./actions";
 
-export default function AdminEquipePage() {
+export default async function AdminEquipePage() {
+  const session = await getSession();
+  if (!session) redirect("/admin/login");
+
+  const members = await fetchTeamMembers(session.token);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="font-serif text-3xl text-brun">Équipe</h1>
           <p className="text-brun-light mt-1">
-            Gérer les membres du collectif
+            {members.length} membre{members.length > 1 ? "s" : ""} dans l&apos;équipe
           </p>
         </div>
-        <button className="px-4 py-2 bg-terracotta text-ivoire font-medium rounded-lg hover:bg-terracotta-dark transition-colors text-sm">
+        <Link
+          href="/admin/equipe/nouveau"
+          className="px-4 py-2 bg-orange text-white font-medium rounded-lg hover:bg-orange-light transition-colors text-sm"
+        >
           + Nouveau membre
-        </button>
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {equipe.map((membre) => (
-          <div
-            key={membre.id}
-            className="bg-white rounded-xl shadow-sm overflow-hidden"
-          >
-            <div className="flex items-center gap-4 p-5">
-              <div className="w-14 h-14 rounded-full overflow-hidden flex-shrink-0">
-                <ImageWithFallback
-                  src={membre.photo_url}
-                  alt={membre.nom}
-                  width={56}
-                  height={56}
-                  className="w-14 h-14 object-cover rounded-full"
-                  fallbackText={membre.nom.split(" ").map((n) => n[0]).join("")}
-                />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-serif text-lg text-brun truncate">
-                  {membre.nom}
-                </h3>
-                <p className="text-sm text-terracotta">{membre.role}</p>
-              </div>
-            </div>
-            <div className="px-5 pb-4">
-              <p className="text-sm text-brun-light line-clamp-2">
-                {membre.bio}
-              </p>
-              <div className="flex gap-3 mt-3">
-                <button className="text-xs text-terracotta hover:text-terracotta-dark">
-                  Modifier
-                </button>
-                <button className="text-xs text-brun-light hover:text-brun">
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-creme-dark/50">
+              <th className="text-left px-5 py-3 text-brun-light font-medium">Nom</th>
+              <th className="text-left px-5 py-3 text-brun-light font-medium">Email</th>
+              <th className="text-left px-5 py-3 text-brun-light font-medium">Téléphone</th>
+              <th className="text-left px-5 py-3 text-brun-light font-medium">Rôle</th>
+              <th className="text-left px-5 py-3 text-brun-light font-medium">Statut</th>
+              <th className="text-right px-5 py-3 text-brun-light font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {members.map((m) => (
+              <tr key={m.id} className="border-b border-creme-dark/30 last:border-0 hover:bg-creme/50">
+                <td className="px-5 py-3 text-brun font-medium">
+                  {m.first_name} {m.last_name}
+                </td>
+                <td className="px-5 py-3 text-brun-light">{m.email}</td>
+                <td className="px-5 py-3 text-brun-light">{m.phone || "—"}</td>
+                <td className="px-5 py-3">
+                  {m.roles.map((r) => (
+                    <span
+                      key={r.id}
+                      className="text-xs px-2 py-0.5 rounded-full bg-vert-eau/15 text-vert-eau font-medium mr-1"
+                    >
+                      {r.name}
+                    </span>
+                  ))}
+                </td>
+                <td className="px-5 py-3">
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    m.active
+                      ? "bg-vert-eau/15 text-vert-eau"
+                      : "bg-rose/10 text-rose"
+                  }`}>
+                    {m.active ? "Actif" : "Inactif"}
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-right space-x-2">
+                  <Link
+                    href={`/admin/equipe/${m.id}`}
+                    className="text-xs text-orange hover:text-orange-light"
+                  >
+                    Modifier
+                  </Link>
+                  <form action={removeMemberAction} className="inline">
+                    <input type="hidden" name="user_id" value={m.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-brun-light hover:text-rose"
+                      onClick={(e) => {
+                        if (!confirm(`Retirer ${m.first_name} ${m.last_name} de l'équipe ?`)) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      Retirer
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+            {members.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-5 py-8 text-center text-brun-light">
+                  Aucun membre dans l&apos;équipe
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

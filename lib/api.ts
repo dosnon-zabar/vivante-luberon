@@ -1,7 +1,8 @@
-import type { Recette, Evenement, User, ApiRecipe, ApiEvent, ApiResponse } from "./types";
+import type { Recette, Evenement, TeamMember, Role, ApiRecipe, ApiEvent, ApiResponse } from "./types";
 
 const BASE_URL = process.env.CHEFMATE_API_URL || "https://traiteur.zabar.fr/api/v1";
 const API_KEY = process.env.CHEFMATE_API_KEY || "";
+const TEAM_ID = process.env.CHEFMATE_TEAM_ID || "";
 const CDN_BASE = "https://traiteur.zabar.fr";
 
 function headers(): HeadersInit {
@@ -199,21 +200,79 @@ export async function fetchEvenement(id: string): Promise<Evenement | null> {
   return mapEvent(json.data);
 }
 
-// === Auth (pas utilisé pour cette phase) ===
+// === Membres d'équipe (auth Bearer token) ===
 
-export async function login(
-  _email: string,
-  _password: string
-): Promise<{ token: string }> {
-  return Promise.resolve({ token: "" });
+function bearerHeaders(token: string): HeadersInit {
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
 }
 
-export async function getMe(_token: string): Promise<User> {
-  return Promise.resolve({
-    id: "",
-    email: "",
-    first_name: "",
-    last_name: "",
-    roles: [],
+export async function fetchTeamMembers(token: string): Promise<TeamMember[]> {
+  const res = await fetch(`${BASE_URL}/teams/${TEAM_ID}/members`, {
+    headers: bearerHeaders(token),
+    cache: "no-store",
   });
+  if (!res.ok) return [];
+  const json: ApiResponse<TeamMember[]> = await res.json();
+  return json.data;
 }
+
+export async function createTeamMember(
+  token: string,
+  data: { first_name: string; last_name: string; email: string; password: string; phone?: string; role_id?: string }
+): Promise<{ success: boolean; error?: string }> {
+  const res = await fetch(`${BASE_URL}/teams/${TEAM_ID}/members`, {
+    method: "POST",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) return { success: false, error: json.error || "Erreur lors de la création" };
+  return { success: true };
+}
+
+export async function updateTeamMember(
+  token: string,
+  userId: string,
+  data: Record<string, unknown>
+): Promise<{ success: boolean; error?: string }> {
+  const res = await fetch(`${BASE_URL}/teams/${TEAM_ID}/members/${userId}`, {
+    method: "PATCH",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) return { success: false, error: json.error || "Erreur lors de la modification" };
+  return { success: true };
+}
+
+export async function removeTeamMember(
+  token: string,
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  const res = await fetch(`${BASE_URL}/teams/${TEAM_ID}/members/${userId}`, {
+    method: "DELETE",
+    headers: bearerHeaders(token),
+  });
+  if (!res.ok) {
+    const json = await res.json();
+    return { success: false, error: json.error || "Erreur lors de la suppression" };
+  }
+  return { success: true };
+}
+
+export async function fetchRoles(token: string): Promise<Role[]> {
+  const res = await fetch(`${BASE_URL}/roles`, {
+    headers: bearerHeaders(token),
+    cache: "no-store",
+  });
+  if (!res.ok) return [];
+  const json: ApiResponse<Role[]> = await res.json();
+  // Ne retourner que les rôles assignables depuis Vivante
+  return json.data.filter((r) => ["contributeur", "traiteur"].includes(r.name));
+}
+
+// User type is used by lib/auth.ts, re-exported for convenience
+export type { User } from "./types";
