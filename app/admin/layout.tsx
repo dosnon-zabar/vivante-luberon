@@ -9,16 +9,15 @@ export default async function AdminLayout({
 }) {
   const session = await getSession();
 
-  // Si pas connecté, on laisse le contenu se rendre tel quel
-  // (la page login gère son propre rendu sans sidebar)
+  // Page login : pas de sidebar, rendu simple
   if (!session) {
     return <>{children}</>;
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-5rem)]">
+    <div className="flex h-screen overflow-hidden">
       <AdminSidebar user={session} />
-      <div className="flex-1 p-8 bg-creme">{children}</div>
+      <div className="flex-1 overflow-y-auto p-8 bg-creme">{children}</div>
     </div>
   );
 }

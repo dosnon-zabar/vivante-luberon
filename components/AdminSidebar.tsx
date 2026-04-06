@@ -26,13 +26,23 @@ export default function AdminSidebar({ user }: Props) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-brun min-h-screen p-6 flex-shrink-0 flex flex-col">
-      <Link href="/" className="block mb-8">
+    <aside className="w-64 bg-brun h-screen p-6 flex-shrink-0 flex flex-col sticky top-0">
+      <Link
+        href="/"
+        className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 transition-colors mb-6"
+      >
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Retour au site
+      </Link>
+
+      <div className="mb-8">
         <span className="font-serif text-xl text-white">Vivante</span>
         <span className="block text-[10px] uppercase tracking-[0.2em] text-white/40">
           Administration
         </span>
-      </Link>
+      </div>
 
       <nav className="space-y-1 flex-1">
         {visibleLinks.map((link) => {
@@ -86,15 +96,6 @@ export default function AdminSidebar({ user }: Props) {
           </button>
         </form>
 
-        <Link
-          href="/"
-          className="flex items-center gap-2 text-xs text-white/30 hover:text-white/60 transition-colors px-1"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Retour au site
-        </Link>
       </div>
     </aside>
   );
