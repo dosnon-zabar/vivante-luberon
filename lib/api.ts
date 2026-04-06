@@ -93,7 +93,7 @@ export async function fetchRecettes(
 
   const res = await fetch(`${BASE_URL}/recipes?${searchParams}`, {
     headers: headers(),
-    cache: "no-store",
+    next: { revalidate: 30 },
   });
 
   if (!res.ok) {
@@ -111,7 +111,7 @@ export async function fetchRecettes(
 export async function fetchRecette(id: string): Promise<Recette | null> {
   const res = await fetch(`${BASE_URL}/recipes/${id}`, {
     headers: headers(),
-    cache: "no-store",
+    next: { revalidate: 30 },
   });
 
   if (!res.ok) return null;
