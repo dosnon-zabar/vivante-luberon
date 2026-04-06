@@ -51,7 +51,7 @@ export default async function AdminEquipePage() {
                 <td className="px-5 py-3 text-brun-light">{m.phone || "—"}</td>
                 <td className="px-5 py-3">
                   {m.roles
-                    .filter((r) => ["contributeur", "traiteur", "Team manager"].includes(r.name))
+                    .filter((r) => ["contributeur", "traiteur", "team manager"].includes(r.name.toLowerCase()))
                     .map((r) => (
                     <span
                       key={r.id}

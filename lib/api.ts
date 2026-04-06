@@ -271,7 +271,8 @@ export async function fetchRoles(token: string): Promise<Role[]> {
   if (!res.ok) return [];
   const json: ApiResponse<Role[]> = await res.json();
   // Ne retourner que les rôles assignables depuis Vivante
-  return json.data.filter((r) => ["contributeur", "traiteur", "Team manager"].includes(r.name));
+  const assignable = ["contributeur", "traiteur", "team manager"];
+  return json.data.filter((r) => assignable.includes(r.name.toLowerCase()));
 }
 
 // User type is used by lib/auth.ts, re-exported for convenience
