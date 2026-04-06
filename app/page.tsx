@@ -1,65 +1,183 @@
-import Image from "next/image";
+import Link from "next/link";
+import { evenements } from "@/data/evenements";
+import { fetchRecettes } from "@/lib/api";
+import RecetteCard from "@/components/RecetteCard";
+import EvenementCard from "@/components/EvenementCard";
+import { EtoileOrange, EtoileBleu, Soleil, DemiSoleil, CourbePeche, OndeVerte } from "@/components/Motifs";
 
-export default function Home() {
+const prochainsEvenements = evenements
+  .filter((e) => e.statut === "a_venir")
+  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  .slice(0, 3);
+
+export default async function Accueil() {
+  const { recettes } = await fetchRecettes({ limit: 6, status: "publiee" });
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <>
+      {/* Hero — fond clair avec motifs décoratifs */}
+      <section className="relative bg-creme overflow-hidden py-24 sm:py-32">
+        {/* Motifs décoratifs */}
+        <div className="absolute top-6 left-8 sm:left-16">
+          <EtoileOrange className="w-10 h-10 sm:w-14 sm:h-14" />
+        </div>
+        <div className="absolute top-20 right-12 sm:right-24">
+          <EtoileBleu className="w-5 h-5" />
+        </div>
+        <div className="absolute bottom-8 right-8 sm:right-20">
+          <Soleil className="w-16 h-16 sm:w-20 sm:h-20 opacity-80" />
+        </div>
+        <div className="absolute bottom-0 left-16 sm:left-32">
+          <DemiSoleil className="w-20 h-10 opacity-50" />
+        </div>
+        <div className="absolute top-1/3 left-4 sm:left-10 opacity-40">
+          <CourbePeche className="w-8 h-16" />
+        </div>
+        <div className="absolute top-12 right-1/3 opacity-50">
+          <OndeVerte className="w-12 h-6" />
+        </div>
+        <div className="absolute bottom-20 left-1/4 opacity-30">
+          <EtoileOrange className="w-6 h-6" />
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 text-center">
+          <h1 className="font-serif text-6xl sm:text-8xl font-bold tracking-tight text-brun">
+            Vivante
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-2 text-sm uppercase tracking-[0.3em] text-brun-light">
+            &mdash; Manger les lieux &mdash;
           </p>
+          <p className="mt-1 text-xs uppercase tracking-[0.2em] text-brun-light/60">
+            Luberon
+          </p>
+          <p className="mt-8 text-xl sm:text-2xl text-brun-light max-w-2xl mx-auto leading-relaxed font-serif italic">
+            Cuisine vivante, festive et populaire
+            <br />
+            au c&oelig;ur du Luberon
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/evenements"
+              className="inline-flex items-center justify-center px-7 py-3.5 bg-orange text-white font-semibold rounded-full hover:bg-orange-light transition-colors shadow-sm"
+            >
+              Nos prochains événements
+            </Link>
+            <Link
+              href="/recettes"
+              className="inline-flex items-center justify-center px-7 py-3.5 border-2 border-brun/20 text-brun font-semibold rounded-full hover:bg-brun/5 transition-colors"
+            >
+              Découvrir nos recettes
+            </Link>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Prochains événements */}
+      <section className="py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex items-end justify-between mb-10">
+            <div className="flex items-center gap-3">
+              <EtoileOrange className="w-7 h-7 hidden sm:block" />
+              <div>
+                <h2 className="font-serif text-3xl sm:text-4xl text-brun">
+                  Prochains événements
+                </h2>
+                <p className="mt-2 text-brun-light">
+                  Retrouvez-nous autour d&apos;une table
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/evenements"
+              className="hidden sm:inline-flex text-sm font-semibold text-orange hover:text-orange-light transition-colors"
+            >
+              Voir tout &rarr;
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {prochainsEvenements.map((evt) => (
+              <EvenementCard key={evt.id} evenement={evt} />
+            ))}
+          </div>
+          <div className="sm:hidden mt-6 text-center">
+            <Link
+              href="/evenements"
+              className="text-sm font-semibold text-orange"
+            >
+              Voir tous les événements &rarr;
+            </Link>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* Nos recettes */}
+      <section className="py-16 sm:py-20 bg-white/60">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex items-end justify-between mb-10">
+            <div className="flex items-center gap-3">
+              <EtoileBleu className="w-5 h-5 hidden sm:block" />
+              <div>
+                <h2 className="font-serif text-3xl sm:text-4xl text-brun">
+                  Nos recettes
+                </h2>
+                <p className="mt-2 text-brun-light">
+                  Saveurs provençales à partager
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/recettes"
+              className="hidden sm:inline-flex text-sm font-semibold text-orange hover:text-orange-light transition-colors"
+            >
+              Toutes les recettes &rarr;
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recettes.map((recette) => (
+              <RecetteCard key={recette.id} recette={recette} />
+            ))}
+          </div>
+          <div className="sm:hidden mt-6 text-center">
+            <Link
+              href="/recettes"
+              className="text-sm font-semibold text-orange"
+            >
+              Toutes les recettes &rarr;
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Qui sommes-nous */}
+      <section className="relative py-16 sm:py-20 overflow-hidden">
+        <div className="absolute top-8 right-12 opacity-40">
+          <EtoileOrange className="w-8 h-8" />
+        </div>
+        <div className="absolute bottom-4 left-8 opacity-30">
+          <OndeVerte className="w-10 h-5" />
+        </div>
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="font-serif text-3xl sm:text-4xl text-brun">
+            Qui sommes-nous ?
+          </h2>
+          <p className="mt-6 text-lg text-brun-light leading-relaxed max-w-2xl mx-auto">
+            Vivante est un collectif culinaire ancré dans le Luberon. Nous
+            organisons des banquets de village, des ateliers de cuisine et des
+            rencontres paysannes pour retisser le lien entre ce que nous mangeons
+            et le territoire qui nous nourrit.
+          </p>
+          <p className="mt-4 text-lg text-brun-light leading-relaxed max-w-2xl mx-auto">
+            Notre cuisine est vivante, populaire et généreuse. Elle puise dans
+            les traditions provençales et s&apos;invente chaque jour avec les
+            producteurs et productrices du coin.
+          </p>
+          <Link
+            href="/a-propos"
+            className="inline-flex items-center justify-center mt-8 px-7 py-3.5 bg-vert-eau text-brun font-semibold rounded-full hover:bg-vert-eau-light transition-colors"
+          >
+            En savoir plus
+          </Link>
+        </div>
+      </section>
+    </>
   );
 }

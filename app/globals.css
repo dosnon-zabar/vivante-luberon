@@ -1,26 +1,50 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300..700&family=DM+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Palette Vivante — inspirée des supports print */
+  --color-orange: #E8792B;
+  --color-orange-light: #F4A261;
+  --color-jaune: #F2C94C;
+  --color-jaune-light: #FBE8A6;
+  --color-peche: #E8B4A0;
+  --color-peche-light: #F3D5C8;
+  --color-rose: #E87FA0;
+  --color-vert-eau: #8EC8B0;
+  --color-vert-eau-light: #C3E5D7;
+  --color-bleu-gris: #8B9DAF;
+  --color-bleu-gris-light: #B8C5D3;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Bases */
+  --color-creme: #F6F1EA;
+  --color-creme-dark: #EDE5D8;
+  --color-brun: #3D3229;
+  --color-brun-light: #6B5E52;
+
+  /* Anciens noms préservés pour compat */
+  --color-ivoire: #F6F1EA;
+  --color-ivoire-dark: #EDE5D8;
+  --color-terracotta: #E8792B;
+  --color-terracotta-dark: #D06520;
+  --color-sauge: #8EC8B0;
+  --color-sauge-dark: #5E9E82;
+  --color-sauge-light: #C3E5D7;
+  --color-argile: #E8B4A0;
+  --color-argile-light: #F3D5C8;
+  --color-ocre: #F2C94C;
+  --color-ocre-light: #FBE8A6;
+
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "DM Sans", "Inter", system-ui, sans-serif;
+  --font-display: "DM Sans", system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-creme);
+  color: var(--color-brun);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-serif);
 }

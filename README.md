@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vivante — Manger les lieux
 
-## Getting Started
+Site web du collectif culinaire **Vivante**, ancré dans le Luberon (Provence).
 
-First, run the development server:
+## Stack
+
+- **Next.js** (App Router) + TypeScript
+- **Tailwind CSS** v4 (palette provençale custom)
+- Données mockées dans `/data/` (pas d'API pour cette phase)
+
+## Lancer en dev
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Le site est accessible sur [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Structure du projet
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+├── page.tsx                 # Accueil
+├── recettes/                # Liste + détail recettes
+├── evenements/              # Liste + détail événements
+├── a-propos/                # Présentation du collectif
+└── admin/                   # Dashboard + gestion (squelettes)
 
-## Learn More
+components/                  # Composants partagés
+data/                        # Données mockées (recettes, événements, équipe)
+lib/
+├── types.ts                 # Types TypeScript
+└── api.ts                   # Signatures API (stubs, prêtes pour ChefMate)
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Prochaines étapes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Branchement API ChefMate** — Implémenter les fonctions dans `lib/api.ts` (base URL: `https://traiteur.zabar.fr/api/v1`)
+2. **Auth admin** — Ajouter l'authentification JWT pour les pages `/admin`
+3. **Fonctionnalités dynamiques** — Filtres recettes, inscription événements, CRUD admin
+4. **Images** — Brancher les vraies images via le CDN ChefMate
