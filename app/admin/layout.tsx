@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import AdminSidebar from "@/components/AdminSidebar";
+import ToastProvider from "@/components/ToastProvider";
 
 export default async function AdminLayout({
   children,
@@ -11,13 +12,19 @@ export default async function AdminLayout({
 
   // Page login : pas de sidebar, rendu simple
   if (!session) {
-    return <>{children}</>;
+    return (
+      <ToastProvider>
+        {children}
+      </ToastProvider>
+    );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <AdminSidebar user={session} />
-      <div className="flex-1 overflow-y-auto p-8 bg-creme">{children}</div>
-    </div>
+    <ToastProvider>
+      <div className="flex h-screen overflow-hidden">
+        <AdminSidebar user={session} />
+        <div className="flex-1 overflow-y-auto p-8 bg-creme">{children}</div>
+      </div>
+    </ToastProvider>
   );
 }

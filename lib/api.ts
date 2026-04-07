@@ -400,6 +400,72 @@ export async function fetchRoles(token: string): Promise<Role[]> {
   return json.data.filter((r) => assignable.includes(r.name.toLowerCase()));
 }
 
+// === Gestion granulaire des images d'un event ===
+
+export type EventImagePayload = {
+  image_type: "cover" | "report";
+  image_url: string;
+  caption?: string;
+  copyright?: string;
+};
+
+export type EventImageRow = {
+  id: string;
+  event_id: string;
+  image_type: "cover" | "report";
+  image_url: string;
+  caption: string | null;
+  copyright: string | null;
+  sort_order: number;
+};
+
+export async function addEventImage(
+  token: string,
+  eventId: string,
+  data: EventImagePayload
+): Promise<{ success: boolean; image?: EventImageRow; error?: string }> {
+  const res = await fetch(`${BASE_URL}/events/${eventId}/images`, {
+    method: "POST",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) return { success: false, error: json.error || "Erreur ajout image" };
+  return { success: true, image: json.data };
+}
+
+export async function updateEventImage(
+  token: string,
+  eventId: string,
+  imageId: string,
+  data: { caption?: string; copyright?: string; sort_order?: number }
+): Promise<{ success: boolean; error?: string }> {
+  const res = await fetch(`${BASE_URL}/events/${eventId}/images/${imageId}`, {
+    method: "PATCH",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) return { success: false, error: json.error || "Erreur modification image" };
+  return { success: true };
+}
+
+export async function deleteEventImage(
+  token: string,
+  eventId: string,
+  imageId: string
+): Promise<{ success: boolean; error?: string }> {
+  const res = await fetch(`${BASE_URL}/events/${eventId}/images/${imageId}`, {
+    method: "DELETE",
+    headers: bearerHeaders(token),
+  });
+  if (!res.ok) {
+    const json = await res.json();
+    return { success: false, error: json.error || "Erreur suppression image" };
+  }
+  return { success: true };
+}
+
 // === Upload d'images (Bearer token) ===
 
 export async function uploadImage(

@@ -4,19 +4,12 @@ import { useState, useActionState } from "react";
 import Link from "next/link";
 import EventDatesEditor from "./EventDatesEditor";
 import ImageDropzone from "@/components/ImageDropzone";
+import ImageManager, { type ManagedImage } from "./ImageManager";
 import type { Evenement, EventDate } from "@/lib/types";
 import { createEventAction, updateEventAction, type ActionState } from "./actions";
 
 type Props = {
   event?: Evenement;
-};
-
-type EditableImage = {
-  id?: string;
-  type: "cover" | "report";
-  url: string;
-  caption?: string;
-  sort_order?: number;
 };
 
 type EditableTestimonial = {
@@ -34,6 +27,19 @@ const inputClass =
 
 const labelClass = "block text-sm font-medium text-brun mb-1";
 
+function toManagedImages(event: Evenement | undefined, type: "cover" | "report"): ManagedImage[] {
+  if (!event) return [];
+  return event.images
+    .filter((img) => img.type === type && img.id)
+    .map((img) => ({
+      id: img.id!,
+      image_url: img.url,
+      caption: img.caption || null,
+      copyright: null,
+      sort_order: img.sort_order || 0,
+    }));
+}
+
 export default function EventForm({ event }: Props) {
   const isEdit = !!event;
   const action = isEdit ? updateEventAction : createEventAction;
@@ -42,35 +48,12 @@ export default function EventForm({ event }: Props) {
   const [tab, setTab] = useState<Tab>("general");
   const [dates, setDates] = useState<EventDate[]>(event?.dates || []);
   const [mainImage, setMainImage] = useState<string>(event?.photo_url || "");
-  const [images, setImages] = useState<EditableImage[]>(event?.images || []);
   const [testimonials, setTestimonials] = useState<EditableTestimonial[]>(
     event?.temoignages || []
   );
 
-  const coverImages = images.filter((i) => i.type === "cover");
-  const reportImages = images.filter((i) => i.type === "report");
-
-  function addImage(type: "cover" | "report") {
-    setImages([...images, { type, url: "", caption: "", sort_order: images.length }]);
-  }
-
-  function addUploadedImages(urls: string[], type: "cover" | "report") {
-    const newImages: EditableImage[] = urls.map((url, i) => ({
-      type,
-      url,
-      caption: "",
-      sort_order: images.length + i,
-    }));
-    setImages([...images, ...newImages]);
-  }
-
-  function updateImage(idx: number, patch: Partial<EditableImage>) {
-    setImages(images.map((img, i) => (i === idx ? { ...img, ...patch } : img)));
-  }
-
-  function removeImage(idx: number) {
-    setImages(images.filter((_, i) => i !== idx));
-  }
+  const initialCoverImages = toManagedImages(event, "cover");
+  const initialReportImages = toManagedImages(event, "report");
 
   function addTestimonial() {
     setTestimonials([
@@ -87,16 +70,6 @@ export default function EventForm({ event }: Props) {
     setTestimonials(testimonials.filter((_, i) => i !== idx));
   }
 
-  // Sérialise les images au format attendu par l'API
-  const imagesPayload = images
-    .filter((i) => i.url)
-    .map((i, idx) => ({
-      image_type: i.type,
-      image_url: i.url,
-      caption: i.caption || null,
-      sort_order: idx,
-    }));
-
   const testimonialsPayload = testimonials
     .filter((t) => t.auteur && t.texte)
     .map((t, idx) => ({
@@ -110,7 +83,6 @@ export default function EventForm({ event }: Props) {
     <form action={formAction} className="space-y-6">
       {isEdit && <input type="hidden" name="event_id" value={event!.id} />}
       <input type="hidden" name="dates_json" value={JSON.stringify(dates)} />
-      <input type="hidden" name="images_json" value={JSON.stringify(imagesPayload)} />
       <input type="hidden" name="testimonials_json" value={JSON.stringify(testimonialsPayload)} />
 
       {state?.error && (
@@ -123,22 +95,30 @@ export default function EventForm({ event }: Props) {
       <div className="flex gap-1 border-b border-brun/10">
         {(
           [
-            { key: "general", label: "Infos générales" },
-            { key: "presentation", label: "Présentation" },
-            { key: "compte-rendu", label: "Compte-rendu" },
-          ] as { key: Tab; label: string }[]
+            { key: "general", label: "Infos générales", disabled: false },
+            { key: "presentation", label: "Présentation", disabled: !isEdit },
+            { key: "compte-rendu", label: "Compte-rendu", disabled: !isEdit },
+          ] as { key: Tab; label: string; disabled: boolean }[]
         ).map((t) => (
           <button
             key={t.key}
             type="button"
-            onClick={() => setTab(t.key)}
+            onClick={() => !t.disabled && setTab(t.key)}
+            disabled={t.disabled}
             className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-[1px] transition-colors ${
-              tab === t.key
+              t.disabled
+                ? "border-transparent text-brun-light/30 cursor-not-allowed"
+                : tab === t.key
                 ? "border-orange text-orange"
                 : "border-transparent text-brun-light hover:text-brun"
             }`}
           >
             {t.label}
+            {t.disabled && (
+              <svg className="inline w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            )}
           </button>
         ))}
       </div>
@@ -214,14 +194,25 @@ export default function EventForm({ event }: Props) {
               placeholder="Notes privées, non affichées publiquement"
             />
           </div>
+
+          {!isEdit && (
+            <div className="bg-jaune/10 border border-jaune/30 rounded-lg p-4 text-sm text-brun">
+              <p className="font-medium mb-1">📌 Création en cours</p>
+              <p className="text-brun-light">
+                Pour ajouter des images de présentation et de compte-rendu, enregistrez
+                d&apos;abord l&apos;événement (même en brouillon). Les onglets seront
+                alors débloqués.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* === ONGLET PRÉSENTATION === */}
-      {tab === "presentation" && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+      {/* === ONGLET PRÉSENTATION (édition uniquement) === */}
+      {tab === "presentation" && isEdit && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
           <div>
-            <label className={labelClass}>Image de couverture</label>
+            <label className={labelClass}>Image de couverture principale</label>
             <input type="hidden" name="image_url" value={mainImage} />
             {mainImage && (
               <div className="mb-3 relative">
@@ -243,10 +234,15 @@ export default function EventForm({ event }: Props) {
             <ImageDropzone
               prefix="events"
               onUploaded={(urls) => setMainImage(urls[0])}
-              label={mainImage ? "Remplacer l'image de couverture" : "Glissez ou cliquez pour ajouter une image"}
+              label={
+                mainImage
+                  ? "Remplacer l'image de couverture"
+                  : "Glissez ou cliquez pour ajouter une image"
+              }
             />
             <p className="text-xs text-brun-light/60 mt-2">
-              Image principale affichée en haut de la page événement
+              Image principale affichée en haut de la page événement. Sera enregistrée
+              avec le formulaire.
             </p>
           </div>
 
@@ -262,68 +258,24 @@ export default function EventForm({ event }: Props) {
           </div>
 
           <div>
-            <label className={labelClass + " mb-3"}>Images additionnelles</label>
-            <div className="mb-3">
-              <ImageDropzone
-                prefix="events"
-                multiple
-                onUploaded={(urls) => addUploadedImages(urls, "cover")}
-                label="Ajouter une ou plusieurs images"
-              />
-            </div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-brun-light/60">
-                {coverImages.length} image{coverImages.length > 1 ? "s" : ""}
-              </span>
-              <button
-                type="button"
-                onClick={() => addImage("cover")}
-                className="text-xs text-orange hover:text-orange-light font-semibold"
-              >
-                + Ajouter une URL manuellement
-              </button>
-            </div>
-            {coverImages.length === 0 ? (
-              <p className="text-xs text-brun-light/60 italic">Aucune image additionnelle</p>
-            ) : (
-              <div className="space-y-3">
-                {coverImages.map((img) => {
-                  const idx = images.indexOf(img);
-                  return (
-                    <div key={idx} className="bg-creme/50 rounded-lg p-3 space-y-2">
-                      <input
-                        type="text"
-                        value={img.url}
-                        onChange={(e) => updateImage(idx, { url: e.target.value })}
-                        className={inputClass}
-                        placeholder="URL de l'image"
-                      />
-                      <input
-                        type="text"
-                        value={img.caption || ""}
-                        onChange={(e) => updateImage(idx, { caption: e.target.value })}
-                        className={inputClass}
-                        placeholder="Légende (optionnel)"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="text-xs text-rose hover:text-rose/70"
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <label className={labelClass + " mb-3"}>Images additionnelles (galerie)</label>
+            <p className="text-xs text-brun-light/60 mb-3">
+              Les images sont liées immédiatement à l&apos;événement dès l&apos;upload.
+              Modifiez la légende et le copyright directement dans la liste.
+            </p>
+            <ImageManager
+              eventId={event!.id}
+              imageType="cover"
+              initialImages={initialCoverImages}
+              label="Ajouter une ou plusieurs images de présentation"
+            />
           </div>
         </div>
       )}
 
-      {/* === ONGLET COMPTE-RENDU === */}
-      {tab === "compte-rendu" && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+      {/* === ONGLET COMPTE-RENDU (édition uniquement) === */}
+      {tab === "compte-rendu" && isEdit && (
+        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
           <div>
             <label className={labelClass}>Texte du compte-rendu</label>
             <textarea
@@ -337,60 +289,16 @@ export default function EventForm({ event }: Props) {
 
           <div>
             <label className={labelClass + " mb-3"}>Photos du compte-rendu</label>
-            <div className="mb-3">
-              <ImageDropzone
-                prefix="events"
-                multiple
-                onUploaded={(urls) => addUploadedImages(urls, "report")}
-                label="Ajouter une ou plusieurs photos"
-              />
-            </div>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs text-brun-light/60">
-                {reportImages.length} photo{reportImages.length > 1 ? "s" : ""}
-              </span>
-              <button
-                type="button"
-                onClick={() => addImage("report")}
-                className="text-xs text-orange hover:text-orange-light font-semibold"
-              >
-                + Ajouter une URL manuellement
-              </button>
-            </div>
-            {reportImages.length === 0 ? (
-              <p className="text-xs text-brun-light/60 italic">Aucune photo</p>
-            ) : (
-              <div className="space-y-3">
-                {reportImages.map((img) => {
-                  const idx = images.indexOf(img);
-                  return (
-                    <div key={idx} className="bg-creme/50 rounded-lg p-3 space-y-2">
-                      <input
-                        type="text"
-                        value={img.url}
-                        onChange={(e) => updateImage(idx, { url: e.target.value })}
-                        className={inputClass}
-                        placeholder="URL de l'image"
-                      />
-                      <input
-                        type="text"
-                        value={img.caption || ""}
-                        onChange={(e) => updateImage(idx, { caption: e.target.value })}
-                        className={inputClass}
-                        placeholder="Légende (optionnel)"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="text-xs text-rose hover:text-rose/70"
-                      >
-                        Supprimer
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <p className="text-xs text-brun-light/60 mb-3">
+              Les photos sont liées immédiatement à l&apos;événement dès
+              l&apos;upload.
+            </p>
+            <ImageManager
+              eventId={event!.id}
+              imageType="report"
+              initialImages={initialReportImages}
+              label="Ajouter une ou plusieurs photos du compte-rendu"
+            />
           </div>
 
           <div>
@@ -461,7 +369,11 @@ export default function EventForm({ event }: Props) {
           disabled={pending}
           className="px-6 py-2.5 bg-orange text-white font-semibold rounded-lg hover:bg-orange-light transition-colors text-sm disabled:opacity-50"
         >
-          {pending ? "Enregistrement..." : isEdit ? "Enregistrer" : "Créer l'événement"}
+          {pending
+            ? "Enregistrement..."
+            : isEdit
+            ? "Enregistrer"
+            : "Créer l'événement (brouillon)"}
         </button>
       </div>
     </form>

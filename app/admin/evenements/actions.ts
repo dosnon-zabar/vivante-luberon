@@ -46,15 +46,8 @@ function parseEventFormData(formData: FormData): Partial<EventInput> {
     }
   }
 
-  // Images : sérialisées en JSON
-  const imagesJson = formData.get("images_json") as string;
-  if (imagesJson) {
-    try {
-      data.images = JSON.parse(imagesJson);
-    } catch {
-      // ignore
-    }
-  }
+  // Note : les images sont gérées via les endpoints granulaires
+  // /api/events/[id]/images, pas via le PATCH event global
 
   // Témoignages : sérialisés en JSON
   const testimonialsJson = formData.get("testimonials_json") as string;
@@ -93,6 +86,10 @@ export async function createEventAction(
   }
 
   revalidatePath("/admin/evenements");
+  // Rediriger vers l'édition pour permettre l'ajout d'images
+  if (result.id) {
+    redirect(`/admin/evenements/${result.id}`);
+  }
   redirect("/admin/evenements");
 }
 
