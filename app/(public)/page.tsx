@@ -11,8 +11,8 @@ export default async function Accueil() {
 
   const [{ recettes }, { evenements: prochainsEvenements }, { evenements: eventsPasses }] = await Promise.all([
     fetchRecettes({ limit: 6, status: "publiee" }),
-    fetchEvenements({ limit: 3, date_from: today, sort_by: "event_date", sort_order: "asc" }),
-    fetchEvenements({ limit: 3, date_to: yesterday, sort_by: "event_date", sort_order: "desc" }),
+    fetchEvenements({ limit: 3, date_from: today, sort_by: "event_date", sort_order: "asc", status: "publiee" }),
+    fetchEvenements({ limit: 3, date_to: yesterday, sort_by: "event_date", sort_order: "desc", status: "publiee" }),
   ]);
   return (
     <>

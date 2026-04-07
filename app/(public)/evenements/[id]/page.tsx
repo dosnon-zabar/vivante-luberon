@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchEvenement } from "@/lib/api";
 import ImageWithFallback from "@/components/ImageWithFallback";
-import InscriptionForm from "@/components/InscriptionForm";
+import type { EventDate } from "@/lib/types";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -15,6 +15,17 @@ function formatDateLong(dateStr: string | null) {
     day: "numeric",
     month: "long",
     year: "numeric",
+  });
+}
+
+function formatDateTime(dateStr: string) {
+  return new Date(dateStr).toLocaleString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -35,9 +46,16 @@ export default async function EvenementDetailPage({ params }: Props) {
   const evenement = await fetchEvenement(id);
 
   if (!evenement) notFound();
+  // Bloquer si pas publié
+  if (evenement.statut !== "publiee") notFound();
 
   const coverImages = evenement.images.filter((img) => img.type === "cover");
   const reportImages = evenement.images.filter((img) => img.type === "report");
+
+  // Date principale à afficher en haut : la première date à venir, sinon la première dans le passé
+  const now = new Date().toISOString();
+  const firstUpcoming = evenement.dates.find((d) => d.start_datetime >= now);
+  const mainDate = firstUpcoming?.start_datetime || evenement.dates[0]?.start_datetime || evenement.date;
 
   return (
     <div className="py-12 sm:py-16">
@@ -69,18 +87,12 @@ export default async function EvenementDetailPage({ params }: Props) {
         </div>
 
         <p className="text-sm font-semibold text-orange uppercase tracking-wide">
-          {formatDateLong(evenement.date)}
+          {formatDateLong(mainDate)}
         </p>
 
         <h1 className="font-serif text-4xl sm:text-5xl text-brun mt-2">
           {evenement.titre}
         </h1>
-
-        {evenement.nombre_places > 0 && (
-          <p className="text-sm text-brun-light mt-3">
-            {evenement.nombre_places} places
-          </p>
-        )}
 
         {/* Contenu conditionnel */}
         {evenement.est_passe ? (
@@ -200,36 +212,65 @@ export default async function EvenementDetailPage({ params }: Props) {
             </div>
 
             <div className="md:col-span-1 space-y-6">
-              {/* Infos pratiques */}
-              <div className="bg-white rounded-xl p-5">
-                <h3 className="font-serif text-lg text-brun mb-3">
-                  Infos pratiques
-                </h3>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex justify-between">
-                    <span className="text-brun-light">Date</span>
-                    <span className="text-brun font-medium">
-                      {formatDateLong(evenement.date)}
-                    </span>
-                  </li>
-                  {evenement.nombre_places > 0 && (
+              {/* Dates */}
+              {evenement.dates.length > 0 ? (
+                <div className="bg-white rounded-xl p-5">
+                  <h3 className="font-serif text-lg text-brun mb-3">
+                    {evenement.dates.length > 1 ? "Dates" : "Date"}
+                  </h3>
+                  <ul className="space-y-4">
+                    {evenement.dates.map((d: EventDate, i) => (
+                      <li key={d.id || i} className="text-sm space-y-1 pb-3 border-b border-creme-dark/40 last:border-0 last:pb-0">
+                        <p className="text-brun font-medium capitalize">
+                          {formatDateTime(d.start_datetime)}
+                        </p>
+                        {d.location && (
+                          <p className="text-brun-light text-xs flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 0115 0z" />
+                            </svg>
+                            {d.location}
+                          </p>
+                        )}
+                        {d.guest_count > 0 && (
+                          <p className="text-brun-light text-xs">{d.guest_count} places</p>
+                        )}
+                        {d.reservation_open && d.reservation_url && (
+                          <a
+                            href={d.reservation_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-block mt-2 text-xs text-orange font-semibold hover:text-orange-light"
+                          >
+                            S&apos;inscrire &rarr;
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl p-5">
+                  <h3 className="font-serif text-lg text-brun mb-3">Infos pratiques</h3>
+                  <ul className="space-y-3 text-sm">
                     <li className="flex justify-between">
-                      <span className="text-brun-light">Places</span>
+                      <span className="text-brun-light">Date</span>
                       <span className="text-brun font-medium">
-                        {evenement.nombre_places}
+                        {formatDateLong(evenement.date)}
                       </span>
                     </li>
-                  )}
-                </ul>
-              </div>
-
-              {/* Formulaire d'inscription */}
-              <div className="bg-white rounded-xl p-5">
-                <h3 className="font-serif text-lg text-brun mb-3">
-                  S&apos;inscrire
-                </h3>
-                <InscriptionForm />
-              </div>
+                    {evenement.nombre_places > 0 && (
+                      <li className="flex justify-between">
+                        <span className="text-brun-light">Places</span>
+                        <span className="text-brun font-medium">
+                          {evenement.nombre_places}
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}

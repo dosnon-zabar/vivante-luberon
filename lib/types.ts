@@ -17,18 +17,35 @@ export type Recette = {
   created_at: string;
 };
 
+export type EventDate = {
+  id?: string;
+  start_datetime: string;
+  duration_minutes: number | null;
+  guest_count: number;
+  location: string | null;
+  reservation_open: boolean;
+  reservation_url: string | null;
+  sort_order: number;
+};
+
+export type EventStatus = "brouillon" | "non_publiee" | "publiee";
+
 export type Evenement = {
   id: string;
   slug: string;
   titre: string;
   description: string | null;
-  date: string | null;
+  date: string | null;           // event_date principal (legacy, conservé pour rétrocompat)
+  dates: EventDate[];            // multi-dates
+  statut: EventStatus;
   nombre_places: number;
   presentation: string | null;
   compte_rendu: string | null;
+  notes: string | null;
   photo_url?: string;
-  images: { type: "cover" | "report"; url: string; caption?: string }[];
-  temoignages: { auteur: string; role?: string; texte: string }[];
+  team_id: string | null;
+  images: { id?: string; type: "cover" | "report"; url: string; caption?: string; sort_order?: number }[];
+  temoignages: { id?: string; auteur: string; role?: string; texte: string; sort_order?: number }[];
   created_at: string;
   est_passe: boolean;
 };
@@ -103,6 +120,17 @@ export type ApiRecipe = {
   }[];
 };
 
+export type ApiEventDate = {
+  id: string;
+  start_datetime: string;
+  duration_minutes: number | null;
+  guest_count: number;
+  location: string | null;
+  reservation_open: boolean;
+  reservation_url: string | null;
+  sort_order: number;
+};
+
 export type ApiEvent = {
   id: string;
   name: string;
@@ -114,9 +142,12 @@ export type ApiEvent = {
   presentation_text: string | null;
   report_text: string | null;
   notes: string | null;
+  status: EventStatus | null;
+  team_id: string | null;
   created_at: string;
   updated_at: string;
   team: { id: string; name: string } | null;
+  event_dates?: ApiEventDate[];
   event_images: {
     id: string;
     image_type: "cover" | "report";

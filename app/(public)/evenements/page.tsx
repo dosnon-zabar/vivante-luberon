@@ -6,8 +6,8 @@ export default async function EvenementsPage() {
   const today = new Date().toISOString().split("T")[0];
 
   const [{ evenements: aVenir }, { evenements: passes }] = await Promise.all([
-    fetchEvenements({ limit: 20, date_from: today, sort_by: "event_date", sort_order: "asc" }),
-    fetchEvenements({ limit: 20, date_to: new Date(Date.now() - 86400000).toISOString().split("T")[0], sort_by: "event_date", sort_order: "desc" }),
+    fetchEvenements({ limit: 20, date_from: today, sort_by: "event_date", sort_order: "asc", status: "publiee" }),
+    fetchEvenements({ limit: 20, date_to: new Date(Date.now() - 86400000).toISOString().split("T")[0], sort_by: "event_date", sort_order: "desc", status: "publiee" }),
   ]);
 
   const aucunEvent = aVenir.length === 0 && passes.length === 0;

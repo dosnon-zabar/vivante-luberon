@@ -17,7 +17,31 @@ function formatDate(dateStr: string | null) {
   });
 }
 
+function getDisplayDate(evenement: Evenement, variant: "upcoming" | "past"): string {
+  // Multi-dates
+  if (evenement.dates.length > 0) {
+    const sorted = evenement.dates.slice().sort((a, b) =>
+      a.start_datetime.localeCompare(b.start_datetime)
+    );
+    if (variant === "upcoming") {
+      const now = new Date().toISOString();
+      const next = sorted.find((d) => d.start_datetime >= now) || sorted[0];
+      const formatted = formatDate(next.start_datetime);
+      if (sorted.length > 1) {
+        return `${formatted} (+${sorted.length - 1} autre${sorted.length > 2 ? "s" : ""})`;
+      }
+      return formatted;
+    }
+    // past : montrer la dernière
+    const last = sorted[sorted.length - 1];
+    return formatDate(last.start_datetime);
+  }
+  return formatDate(evenement.date);
+}
+
 export default function EvenementCard({ evenement, variant = "upcoming" }: Props) {
+  const displayDate = getDisplayDate(evenement, variant);
+
   if (variant === "past") {
     return (
       <Link
@@ -34,9 +58,7 @@ export default function EvenementCard({ evenement, variant = "upcoming" }: Props
           />
         </div>
         <div className="p-4">
-          <p className="text-xs text-brun-light/60">
-            {formatDate(evenement.date)}
-          </p>
+          <p className="text-xs text-brun-light/60">{displayDate}</p>
           <h3 className="font-serif text-lg text-brun mt-1 group-hover:text-orange transition-colors">
             {evenement.titre}
           </h3>
@@ -66,7 +88,7 @@ export default function EvenementCard({ evenement, variant = "upcoming" }: Props
       </div>
       <div className="p-5">
         <p className="text-xs font-semibold text-orange uppercase tracking-wide">
-          {formatDate(evenement.date)}
+          {displayDate}
         </p>
         <h3 className="font-serif text-xl text-brun mt-1 group-hover:text-orange transition-colors">
           {evenement.titre}

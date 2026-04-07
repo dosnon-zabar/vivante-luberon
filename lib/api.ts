@@ -1,4 +1,4 @@
-import type { Recette, Evenement, TeamMember, Role, ApiRecipe, ApiEvent, ApiResponse } from "./types";
+import type { Recette, Evenement, EventStatus, TeamMember, Role, ApiRecipe, ApiEvent, ApiResponse } from "./types";
 
 const BASE_URL = process.env.CHEFMATE_API_URL || "https://traiteur.zabar.fr/api/v1";
 const API_KEY = process.env.CHEFMATE_API_KEY || "";
@@ -125,8 +125,30 @@ export async function fetchRecette(id: string): Promise<Recette | null> {
 // === Événements ===
 
 function mapEvent(e: ApiEvent): Evenement {
-  const today = new Date().toISOString().split("T")[0];
-  const est_passe = e.event_date ? e.event_date < today : false;
+  const now = new Date().toISOString();
+  const dates = (e.event_dates || [])
+    .slice()
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((d) => ({
+      id: d.id,
+      start_datetime: d.start_datetime,
+      duration_minutes: d.duration_minutes,
+      guest_count: d.guest_count,
+      location: d.location,
+      reservation_open: d.reservation_open,
+      reservation_url: d.reservation_url,
+      sort_order: d.sort_order,
+    }));
+
+  // est_passe = true seulement si toutes les dates sont passées
+  // S'il n'y a pas de dates, on retombe sur event_date
+  let est_passe = false;
+  if (dates.length > 0) {
+    est_passe = dates.every((d) => d.start_datetime < now);
+  } else if (e.event_date) {
+    const today = now.split("T")[0];
+    est_passe = e.event_date < today;
+  }
 
   return {
     id: e.id,
@@ -134,26 +156,36 @@ function mapEvent(e: ApiEvent): Evenement {
     titre: e.name,
     description: e.description,
     date: e.event_date,
+    dates,
+    statut: (e.status as Evenement["statut"]) || "brouillon",
     nombre_places: e.guest_count || 0,
     presentation: e.presentation_text,
     compte_rendu: e.report_text,
+    notes: e.notes,
+    team_id: e.team_id,
     photo_url: resolveImageUrl(e.image_url) ||
       resolveImageUrl(
         e.event_images?.find((img) => img.image_type === "cover")?.image_url
       ),
     images: (e.event_images || [])
+      .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((img) => ({
+        id: img.id,
         type: img.image_type,
         url: resolveImageUrl(img.image_url)!,
         caption: img.caption || undefined,
+        sort_order: img.sort_order,
       })),
     temoignages: (e.event_testimonials || [])
+      .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((t) => ({
+        id: t.id,
         auteur: t.author_name,
         role: t.author_role || undefined,
         texte: t.text,
+        sort_order: t.sort_order,
       })),
     created_at: e.created_at,
     est_passe,
@@ -161,7 +193,8 @@ function mapEvent(e: ApiEvent): Evenement {
 }
 
 export async function fetchEvenements(
-  params?: { limit?: number; offset?: number; date_from?: string; date_to?: string; sort_by?: string; sort_order?: string }
+  params?: { limit?: number; offset?: number; date_from?: string; date_to?: string; sort_by?: string; sort_order?: string; status?: string },
+  options?: { token?: string; cache?: RequestCache }
 ): Promise<{ evenements: Evenement[]; total: number }> {
   const searchParams = new URLSearchParams();
   if (params?.limit) searchParams.set("limit", String(params.limit));
@@ -170,11 +203,17 @@ export async function fetchEvenements(
   if (params?.date_to) searchParams.set("date_to", params.date_to);
   if (params?.sort_by) searchParams.set("sort_by", params.sort_by);
   if (params?.sort_order) searchParams.set("sort_order", params.sort_order);
+  if (params?.status) searchParams.set("status", params.status);
 
-  const res = await fetch(`${BASE_URL}/events?${searchParams}`, {
-    headers: headers(),
-    next: { revalidate: 30 },
-  });
+  const requestHeaders = options?.token ? bearerHeaders(options.token) : headers();
+  const fetchOptions: RequestInit = { headers: requestHeaders };
+  if (options?.cache === "no-store") {
+    fetchOptions.cache = "no-store";
+  } else {
+    (fetchOptions as { next?: { revalidate: number } }).next = { revalidate: 30 };
+  }
+
+  const res = await fetch(`${BASE_URL}/events?${searchParams}`, fetchOptions);
 
   if (!res.ok) {
     console.error(`API events error: ${res.status} ${res.statusText}`);
@@ -188,16 +227,102 @@ export async function fetchEvenements(
   };
 }
 
-export async function fetchEvenement(id: string): Promise<Evenement | null> {
-  const res = await fetch(`${BASE_URL}/events/${id}`, {
-    headers: headers(),
-    next: { revalidate: 30 },
-  });
+export async function fetchEvenement(id: string, options?: { token?: string; cache?: RequestCache }): Promise<Evenement | null> {
+  const requestHeaders = options?.token ? bearerHeaders(options.token) : headers();
+  const fetchOptions: RequestInit = { headers: requestHeaders };
+  if (options?.cache === "no-store") {
+    fetchOptions.cache = "no-store";
+  } else {
+    (fetchOptions as { next?: { revalidate: number } }).next = { revalidate: 30 };
+  }
+
+  const res = await fetch(`${BASE_URL}/events/${id}`, fetchOptions);
 
   if (!res.ok) return null;
 
   const json: ApiResponse<ApiEvent> = await res.json();
   return mapEvent(json.data);
+}
+
+// === Mutations Event (Bearer token requis) ===
+
+export type EventInput = {
+  name: string;
+  slug?: string;
+  description?: string | null;
+  event_date?: string | null;
+  guest_count?: number;
+  image_url?: string | null;
+  presentation_text?: string | null;
+  report_text?: string | null;
+  notes?: string | null;
+  status?: EventStatus;
+  team_id: string;
+  dates?: {
+    start_datetime: string;
+    duration_minutes?: number | null;
+    guest_count?: number;
+    location?: string | null;
+    reservation_open?: boolean;
+    reservation_url?: string | null;
+    sort_order?: number;
+  }[];
+  images?: {
+    image_type: "cover" | "report";
+    image_url: string;
+    caption?: string | null;
+    sort_order?: number;
+  }[];
+  testimonials?: {
+    author_name: string;
+    author_role?: string | null;
+    text: string;
+    sort_order?: number;
+  }[];
+};
+
+export async function createEvenement(
+  token: string,
+  data: EventInput
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  const res = await fetch(`${BASE_URL}/events`, {
+    method: "POST",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) return { success: false, error: json.error || "Erreur lors de la création" };
+  return { success: true, id: json.data?.id };
+}
+
+export async function updateEvenement(
+  token: string,
+  id: string,
+  data: Partial<EventInput>
+): Promise<{ success: boolean; error?: string }> {
+  const res = await fetch(`${BASE_URL}/events/${id}`, {
+    method: "PATCH",
+    headers: bearerHeaders(token),
+    body: JSON.stringify(data),
+  });
+  const json = await res.json();
+  if (!res.ok) return { success: false, error: json.error || "Erreur lors de la modification" };
+  return { success: true };
+}
+
+export async function deleteEvenement(
+  token: string,
+  id: string
+): Promise<{ success: boolean; error?: string }> {
+  const res = await fetch(`${BASE_URL}/events/${id}`, {
+    method: "DELETE",
+    headers: bearerHeaders(token),
+  });
+  if (!res.ok) {
+    const json = await res.json();
+    return { success: false, error: json.error || "Erreur lors de la suppression" };
+  }
+  return { success: true };
 }
 
 // === Membres d'équipe (auth Bearer token) ===

@@ -16,13 +16,19 @@ type Props = {
 };
 
 export default function AdminSidebar({ user }: Props) {
-  const isTeamManager = user.roles.some(
-    (r) => ["team manager", "admin global", "admin_plateforme"].includes(r.toLowerCase())
+  const lowerRoles = user.roles.map((r) => r.toLowerCase());
+  const isTeamManager = lowerRoles.some((r) =>
+    ["team manager", "admin global", "admin_plateforme"].includes(r)
+  );
+  const isTraiteur = lowerRoles.some((r) =>
+    ["traiteur", "admin global", "admin_plateforme"].includes(r)
   );
 
-  const visibleLinks = adminLinks.filter(
-    (link) => link.href !== "/admin/equipe" || isTeamManager
-  );
+  const visibleLinks = adminLinks.filter((link) => {
+    if (link.href === "/admin/equipe") return isTeamManager;
+    if (link.href === "/admin/evenements") return isTraiteur;
+    return true;
+  });
   const pathname = usePathname();
 
   return (
