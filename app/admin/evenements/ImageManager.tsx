@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import {
   DndContext,
   closestCenter,
@@ -29,6 +34,16 @@ export type ManagedImage = {
   sort_order: number;
 };
 
+/** Handle exposé via ref pour que le parent puisse déclencher un flush manuel */
+export type ImageManagerHandle = {
+  /** Envoie toutes les modifs caption/copyright en attente. Résout avec true si tout OK. */
+  flushPending: () => Promise<boolean>;
+  /** true s'il y a des modifs non-encore sauvegardées */
+  hasPending: () => boolean;
+};
+
+type PendingChange = { caption?: string; copyright?: string };
+
 type Props = {
   eventId: string;
   imageType: "cover" | "report";
@@ -36,18 +51,59 @@ type Props = {
   label?: string;
 };
 
-export default function ImageManager({
-  eventId,
-  imageType,
-  initialImages,
-  label,
-}: Props) {
+const ImageManager = forwardRef<ImageManagerHandle, Props>(function ImageManager(
+  { eventId, imageType, initialImages, label },
+  ref
+) {
   const [images, setImages] = useState<ManagedImage[]>(initialImages);
   const { show } = useToast();
+
+  // Modifs caption/copyright en attente (keyed par imageId), NON persistées tant
+  // que l'utilisateur n'a pas cliqué sur un bouton d'enregistrement
+  const pendingRef = useRef<Map<string, PendingChange>>(new Map());
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Expose flushPending + hasPending au parent via ref
+  useImperativeHandle(
+    ref,
+    () => ({
+      async flushPending() {
+        const entries = Array.from(pendingRef.current.entries());
+        if (entries.length === 0) return true;
+
+        const results = await Promise.all(
+          entries.map(async ([imageId, changes]) => {
+            try {
+              const res = await fetch(`/api/events/${eventId}/images/${imageId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(changes),
+              });
+              const json = await res.json();
+              return res.ok && json.success;
+            } catch {
+              return false;
+            }
+          })
+        );
+
+        pendingRef.current.clear();
+
+        const allOk = results.every(Boolean);
+        if (!allOk) {
+          show("Certaines légendes/copyrights n'ont pas pu être sauvegardées", "error");
+        }
+        return allOk;
+      },
+      hasPending() {
+        return pendingRef.current.size > 0;
+      },
+    }),
+    [eventId, show]
   );
 
   async function handleUploaded(urls: string[]) {
@@ -85,6 +141,8 @@ export default function ImageManager({
         show(json.error || "Erreur lors de la suppression", "error");
         return;
       }
+      // Supprimer aussi les éventuelles modifs en attente pour cette image
+      pendingRef.current.delete(imageId);
       setImages((prev) => prev.filter((img) => img.id !== imageId));
       show("Image supprimée", "success");
     } catch {
@@ -92,14 +150,18 @@ export default function ImageManager({
     }
   }
 
-  function handleFieldChange(
+  /**
+   * Enregistre une modif caption/copyright en attente (SANS PATCH immédiat).
+   * Sera envoyée au serveur lors du flush déclenché par le formulaire parent.
+   */
+  function handlePendingChange(
     imageId: string,
     field: "caption" | "copyright",
     value: string
   ) {
-    setImages((prev) =>
-      prev.map((img) => (img.id === imageId ? { ...img, [field]: value } : img))
-    );
+    const current = pendingRef.current.get(imageId) || {};
+    current[field] = value;
+    pendingRef.current.set(imageId, current);
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -116,7 +178,8 @@ export default function ImageManager({
     }));
     setImages(reordered);
 
-    // Persist new sort_order for every image whose position changed
+    // Persiste le nouveau sort_order immédiatement (c'est une action explicite
+    // de l'utilisateur, pas un auto-save en frappe)
     try {
       await Promise.all(
         reordered.map((img) =>
@@ -157,11 +220,12 @@ export default function ImageManager({
                 <SortableImageCard
                   key={img.id}
                   image={img}
-                  eventId={eventId}
                   isCover={imageType === "cover" && idx === 0}
                   draggable={images.length > 1}
                   onDelete={() => handleDelete(img.id)}
-                  onFieldChange={(field, value) => handleFieldChange(img.id, field, value)}
+                  onPendingChange={(field, value) =>
+                    handlePendingChange(img.id, field, value)
+                  }
                 />
               ))}
             </div>
@@ -170,30 +234,32 @@ export default function ImageManager({
       )}
     </div>
   );
-}
+});
+
+export default ImageManager;
 
 type ImageCardProps = {
   image: ManagedImage;
-  eventId: string;
   isCover: boolean;
   draggable: boolean;
   onDelete: () => void;
-  onFieldChange: (field: "caption" | "copyright", value: string) => void;
+  onPendingChange: (field: "caption" | "copyright", value: string) => void;
 };
 
 function SortableImageCard({
   image,
-  eventId,
   isCover,
   draggable,
   onDelete,
-  onFieldChange,
+  onPendingChange,
 }: ImageCardProps) {
-  const { show } = useToast();
+  // State local — initialisé une seule fois au mount depuis le prop, puis
+  // plus JAMAIS resynchronisé depuis le prop (pas de useEffect). Le state
+  // local est la source de vérité pendant que l'utilisateur édite. La
+  // persistance vers l'API se fait uniquement via flushPending (déclenché
+  // par le bouton de sauvegarde du formulaire parent).
   const [caption, setCaption] = useState(image.caption || "");
   const [copyright, setCopyright] = useState(image.copyright || "");
-  const captionTimer = useRef<NodeJS.Timeout | null>(null);
-  const copyrightTimer = useRef<NodeJS.Timeout | null>(null);
 
   const {
     attributes,
@@ -210,40 +276,14 @@ function SortableImageCard({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Sync depuis prop si l'image est rechargée depuis l'extérieur
-  useEffect(() => {
-    setCaption(image.caption || "");
-    setCopyright(image.copyright || "");
-  }, [image.id, image.caption, image.copyright]);
-
-  async function patchField(field: "caption" | "copyright", value: string) {
-    try {
-      const res = await fetch(`/api/events/${eventId}/images/${image.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [field]: value }),
-      });
-      const json = await res.json();
-      if (!res.ok || !json.success) {
-        show(json.error || "Erreur sauvegarde", "error");
-      } else {
-        onFieldChange(field, value);
-      }
-    } catch {
-      show("Erreur réseau", "error");
-    }
-  }
-
   function handleCaptionChange(value: string) {
     setCaption(value);
-    if (captionTimer.current) clearTimeout(captionTimer.current);
-    captionTimer.current = setTimeout(() => patchField("caption", value), 800);
+    onPendingChange("caption", value);
   }
 
   function handleCopyrightChange(value: string) {
     setCopyright(value);
-    if (copyrightTimer.current) clearTimeout(copyrightTimer.current);
-    copyrightTimer.current = setTimeout(() => patchField("copyright", value), 800);
+    onPendingChange("copyright", value);
   }
 
   return (

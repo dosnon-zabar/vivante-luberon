@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useActionState } from "react";
+import { useState, useActionState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import EventDatesEditor from "./EventDatesEditor";
-import ImageManager, { type ManagedImage } from "./ImageManager";
+import ImageManager, { type ManagedImage, type ImageManagerHandle } from "./ImageManager";
 import RichTextEditor from "@/components/RichTextEditor";
 import ToastFlash from "@/components/ToastFlash";
 import type { Evenement, EventDate } from "@/lib/types";
@@ -46,6 +46,7 @@ export default function EventForm({ event }: Props) {
   const isEdit = !!event;
   const action = isEdit ? updateEventAction : createEventAction;
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, null);
+  const [flushing, setFlushing] = useState(false);
 
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get("tab") as Tab | null) || "general";
@@ -60,6 +61,31 @@ export default function EventForm({ event }: Props) {
 
   const initialCoverImages = toManagedImages(event, "cover");
   const initialReportImages = toManagedImages(event, "report");
+
+  // Refs vers les ImageManager pour pouvoir flusher leurs modifs en attente
+  // (caption / copyright) au clic sur un bouton d'enregistrement.
+  const coverMgrRef = useRef<ImageManagerHandle>(null);
+  const reportMgrRef = useRef<ImageManagerHandle>(null);
+
+  /**
+   * Wrapper autour de formAction : déclenche d'abord les flush des ImageManager
+   * (PATCH des caption/copyright en attente), PUIS laisse le server action
+   * faire son travail normal (PATCH event, redirect, etc.).
+   */
+  async function handleAction(formData: FormData) {
+    setFlushing(true);
+    try {
+      await Promise.all([
+        coverMgrRef.current?.flushPending?.() ?? Promise.resolve(true),
+        reportMgrRef.current?.flushPending?.() ?? Promise.resolve(true),
+      ]);
+    } finally {
+      setFlushing(false);
+    }
+    return formAction(formData);
+  }
+
+  const isPending = pending || flushing;
 
   function addTestimonial() {
     setTestimonials([
@@ -86,7 +112,7 @@ export default function EventForm({ event }: Props) {
     }));
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={handleAction} className="space-y-6">
       {/* Toast après save_and_stay */}
       <ToastFlash param="saved" message="L'événement a bien été modifié !" type="success" />
 
@@ -216,64 +242,78 @@ export default function EventForm({ event }: Props) {
         </div>
       )}
 
-      {/* === ONGLET PRÉSENTATION (édition uniquement) === */}
-      {tab === "presentation" && isEdit && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
-          <div>
-            <label className={labelClass}>Texte de présentation</label>
-            <RichTextEditor
-              name="presentation_text"
-              defaultValue={event?.presentation || ""}
-              rows={8}
-              placeholder="Présentation détaillée de l'événement, ce qui y sera fait, l'ambiance..."
-            />
+      {/* === ONGLETS PRÉSENTATION & COMPTE-RENDU (édition uniquement) ===
+          NOTE: on garde les deux onglets montés en permanence (hidden via CSS)
+          pour préserver les modifs en attente dans les ImageManager quand on
+          change d'onglet. Sans ça, taper une légende puis changer d'onglet
+          effacerait les modifs non sauvegardées. */}
+      {isEdit && (
+        <>
+          <div
+            className={`bg-white rounded-2xl p-6 shadow-sm space-y-6 ${
+              tab === "presentation" ? "" : "hidden"
+            }`}
+          >
+            <div>
+              <label className={labelClass}>Texte de présentation</label>
+              <RichTextEditor
+                name="presentation_text"
+                defaultValue={event?.presentation || ""}
+                rows={8}
+                placeholder="Présentation détaillée de l'événement, ce qui y sera fait, l'ambiance..."
+              />
+            </div>
+
+            <div>
+              <label className={labelClass + " mb-3"}>Images de présentation</label>
+              <p className="text-xs text-brun-light/60 mb-3">
+                La première image de la liste sera utilisée comme image de couverture
+                de l&apos;événement. Glissez-déposez les vignettes pour réorganiser
+                l&apos;ordre. Les modifications de légende et copyright sont
+                enregistrées lors du clic sur &laquo;&nbsp;Enregistrer&nbsp;&raquo;.
+              </p>
+              <ImageManager
+                ref={coverMgrRef}
+                eventId={event!.id}
+                imageType="cover"
+                initialImages={initialCoverImages}
+                label="Ajouter une ou plusieurs images de présentation"
+              />
+            </div>
           </div>
 
-          <div>
-            <label className={labelClass + " mb-3"}>Images de présentation</label>
-            <p className="text-xs text-brun-light/60 mb-3">
-              La première image de la liste sera utilisée comme image de couverture
-              de l&apos;événement. Glissez-déposez les vignettes pour réorganiser
-              l&apos;ordre. Les images sont liées immédiatement dès l&apos;upload ;
-              modifiez la légende et le copyright directement dans la liste.
-            </p>
-            <ImageManager
-              eventId={event!.id}
-              imageType="cover"
-              initialImages={initialCoverImages}
-              label="Ajouter une ou plusieurs images de présentation"
-            />
-          </div>
-        </div>
-      )}
+          <div
+            className={`bg-white rounded-2xl p-6 shadow-sm space-y-6 ${
+              tab === "compte-rendu" ? "" : "hidden"
+            }`}
+          >
+            <div>
+              <label className={labelClass}>Texte du compte-rendu</label>
+              <RichTextEditor
+                name="report_text"
+                defaultValue={event?.compte_rendu || ""}
+                rows={10}
+                placeholder="Compte-rendu de l'événement après sa tenue"
+              />
+            </div>
 
-      {/* === ONGLET COMPTE-RENDU (édition uniquement) === */}
-      {tab === "compte-rendu" && isEdit && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
-          <div>
-            <label className={labelClass}>Texte du compte-rendu</label>
-            <RichTextEditor
-              name="report_text"
-              defaultValue={event?.compte_rendu || ""}
-              rows={10}
-              placeholder="Compte-rendu de l'événement après sa tenue"
-            />
+            <div>
+              <label className={labelClass + " mb-3"}>Photos du compte-rendu</label>
+              <p className="text-xs text-brun-light/60 mb-3">
+                Les photos sont liées immédiatement à l&apos;événement dès
+                l&apos;upload. Les modifications de légende et copyright sont
+                enregistrées lors du clic sur &laquo;&nbsp;Enregistrer&nbsp;&raquo;.
+              </p>
+              <ImageManager
+                ref={reportMgrRef}
+                eventId={event!.id}
+                imageType="report"
+                initialImages={initialReportImages}
+                label="Ajouter une ou plusieurs photos du compte-rendu"
+              />
+            </div>
           </div>
-
-          <div>
-            <label className={labelClass + " mb-3"}>Photos du compte-rendu</label>
-            <p className="text-xs text-brun-light/60 mb-3">
-              Les photos sont liées immédiatement à l&apos;événement dès
-              l&apos;upload.
-            </p>
-            <ImageManager
-              eventId={event!.id}
-              imageType="report"
-              initialImages={initialReportImages}
-              label="Ajouter une ou plusieurs photos du compte-rendu"
-            />
-          </div>
-        </div>
+        </>
       )}
 
       {/* === ONGLET TÉMOIGNAGES (édition uniquement) === */}
@@ -358,20 +398,20 @@ export default function EventForm({ event }: Props) {
               type="submit"
               name="intent"
               value="save_and_stay"
-              disabled={pending}
+              disabled={isPending}
               className="px-6 py-2.5 bg-white border-2 border-orange text-orange font-semibold rounded-lg hover:bg-orange/5 transition-colors text-sm disabled:opacity-50"
             >
-              {pending ? "Enregistrement..." : "Enregistrer"}
+              {isPending ? "Enregistrement..." : "Enregistrer"}
             </button>
           )}
           <button
             type="submit"
             name="intent"
             value="save_and_quit"
-            disabled={pending}
+            disabled={isPending}
             className="px-6 py-2.5 bg-orange text-white font-semibold rounded-lg hover:bg-orange-light transition-colors text-sm disabled:opacity-50"
           >
-            {pending
+            {isPending
               ? "Enregistrement..."
               : isEdit
               ? "Enregistrer et quitter"
