@@ -138,7 +138,6 @@ export type ApiEvent = {
   description: string | null;
   event_date: string | null;
   guest_count: number | null;
-  image_url: string | null;
   presentation_text: string | null;
   report_text: string | null;
   notes: string | null;

@@ -1,6 +1,23 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import ImageDropzone from "@/components/ImageDropzone";
 import { useToast } from "@/components/ToastProvider";
 
@@ -28,6 +45,11 @@ export default function ImageManager({
   const [images, setImages] = useState<ManagedImage[]>(initialImages);
   const { show } = useToast();
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
   async function handleUploaded(urls: string[]) {
     for (const url of urls) {
       try {
@@ -46,7 +68,7 @@ export default function ImageManager({
         }
         setImages((prev) => [...prev, json.image]);
         show("Image ajoutée et liée à l'événement", "success");
-      } catch (e) {
+      } catch {
         show("Erreur réseau lors de l'ajout", "error");
       }
     }
@@ -80,6 +102,37 @@ export default function ImageManager({
     );
   }
 
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = images.findIndex((img) => img.id === active.id);
+    const newIndex = images.findIndex((img) => img.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(images, oldIndex, newIndex).map((img, idx) => ({
+      ...img,
+      sort_order: idx,
+    }));
+    setImages(reordered);
+
+    // Persist new sort_order for every image whose position changed
+    try {
+      await Promise.all(
+        reordered.map((img) =>
+          fetch(`/api/events/${eventId}/images/${img.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sort_order: img.sort_order }),
+          })
+        )
+      );
+      show("Ordre mis à jour", "success");
+    } catch {
+      show("Erreur lors de la mise à jour de l'ordre", "error");
+    }
+  }
+
   return (
     <div className="space-y-4">
       <ImageDropzone
@@ -90,17 +143,30 @@ export default function ImageManager({
       />
 
       {images.length > 0 && (
-        <div className="space-y-3">
-          {images.map((img) => (
-            <ImageCard
-              key={img.id}
-              image={img}
-              eventId={eventId}
-              onDelete={() => handleDelete(img.id)}
-              onFieldChange={(field, value) => handleFieldChange(img.id, field, value)}
-            />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={images.map((i) => i.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {images.map((img, idx) => (
+                <SortableImageCard
+                  key={img.id}
+                  image={img}
+                  eventId={eventId}
+                  isCover={imageType === "cover" && idx === 0}
+                  draggable={images.length > 1}
+                  onDelete={() => handleDelete(img.id)}
+                  onFieldChange={(field, value) => handleFieldChange(img.id, field, value)}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );
@@ -109,16 +175,40 @@ export default function ImageManager({
 type ImageCardProps = {
   image: ManagedImage;
   eventId: string;
+  isCover: boolean;
+  draggable: boolean;
   onDelete: () => void;
   onFieldChange: (field: "caption" | "copyright", value: string) => void;
 };
 
-function ImageCard({ image, eventId, onDelete, onFieldChange }: ImageCardProps) {
+function SortableImageCard({
+  image,
+  eventId,
+  isCover,
+  draggable,
+  onDelete,
+  onFieldChange,
+}: ImageCardProps) {
   const { show } = useToast();
   const [caption, setCaption] = useState(image.caption || "");
   const [copyright, setCopyright] = useState(image.copyright || "");
   const captionTimer = useRef<NodeJS.Timeout | null>(null);
   const copyrightTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: image.id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   // Sync depuis prop si l'image est rechargée depuis l'extérieur
   useEffect(() => {
@@ -157,14 +247,36 @@ function ImageCard({ image, eventId, onDelete, onFieldChange }: ImageCardProps) 
   }
 
   return (
-    <div className="bg-creme/50 rounded-lg p-3 flex gap-3">
-      <div className="w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-brun/5">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="bg-creme/50 rounded-lg p-3 flex gap-3 items-start"
+    >
+      {draggable && (
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="self-stretch flex items-center px-1 text-brun-light/40 hover:text-brun cursor-grab active:cursor-grabbing touch-none"
+          aria-label="Glisser pour réorganiser"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
+      <div className="relative w-24 h-24 flex-shrink-0 rounded-lg overflow-hidden bg-brun/5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image.image_url}
           alt={image.caption || ""}
           className="w-full h-full object-cover"
         />
+        {isCover && (
+          <span className="absolute top-1 left-1 bg-orange text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">
+            Couverture
+          </span>
+        )}
       </div>
       <div className="flex-1 space-y-2">
         <input

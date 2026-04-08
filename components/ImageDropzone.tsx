@@ -1,6 +1,10 @@
 "use client";
 
 import { useState, useRef, type DragEvent, type ChangeEvent } from "react";
+import { useToast } from "@/components/ToastProvider";
+
+const MAX_FILE_SIZE_MB = 3;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 type Props = {
   prefix: "recettes" | "events" | "equipe";
@@ -38,16 +42,29 @@ export default function ImageDropzone({
   onUploaded,
   multiple = false,
   label = "Glissez une image ici ou cliquez pour sélectionner",
-  hint = "JPG, PNG, WebP — max 5 Mo",
+  hint = `JPG, PNG, WebP — max ${MAX_FILE_SIZE_MB} Mo`,
 }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploads, setUploads] = useState<UploadingFile[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { show } = useToast();
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
 
-    const filesArray = Array.from(files);
+    const allFiles = Array.from(files);
+    const oversized = allFiles.filter((f) => f.size > MAX_FILE_SIZE_BYTES);
+    const filesArray = allFiles.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
+
+    if (oversized.length > 0) {
+      const names = oversized.map((f) => `${f.name} (${(f.size / 1024 / 1024).toFixed(1)} Mo)`).join(", ");
+      show(
+        `Fichier${oversized.length > 1 ? "s" : ""} trop volumineux (max ${MAX_FILE_SIZE_MB} Mo) : ${names}`,
+        "error"
+      );
+    }
+
+    if (filesArray.length === 0) return;
     const initialUploads: UploadingFile[] = filesArray.map((f) => ({
       name: f.name,
       status: "uploading",

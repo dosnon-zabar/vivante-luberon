@@ -163,10 +163,12 @@ function mapEvent(e: ApiEvent): Evenement {
     compte_rendu: e.report_text,
     notes: e.notes,
     team_id: e.team_id,
-    photo_url: resolveImageUrl(e.image_url) ||
-      resolveImageUrl(
-        e.event_images?.find((img) => img.image_type === "cover")?.image_url
-      ),
+    photo_url: resolveImageUrl(
+      e.event_images
+        ?.filter((img) => img.image_type === "cover")
+        ?.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))[0]
+        ?.image_url
+    ),
     images: (e.event_images || [])
       .slice()
       .sort((a, b) => a.sort_order - b.sort_order)
@@ -252,7 +254,6 @@ export type EventInput = {
   description?: string | null;
   event_date?: string | null;
   guest_count?: number;
-  image_url?: string | null;
   presentation_text?: string | null;
   report_text?: string | null;
   notes?: string | null;

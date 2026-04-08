@@ -3,7 +3,6 @@
 import { useState, useActionState } from "react";
 import Link from "next/link";
 import EventDatesEditor from "./EventDatesEditor";
-import ImageDropzone from "@/components/ImageDropzone";
 import ImageManager, { type ManagedImage } from "./ImageManager";
 import type { Evenement, EventDate } from "@/lib/types";
 import { createEventAction, updateEventAction, type ActionState } from "./actions";
@@ -47,7 +46,6 @@ export default function EventForm({ event }: Props) {
 
   const [tab, setTab] = useState<Tab>("general");
   const [dates, setDates] = useState<EventDate[]>(event?.dates || []);
-  const [mainImage, setMainImage] = useState<string>(event?.photo_url || "");
   const [testimonials, setTestimonials] = useState<EditableTestimonial[]>(
     event?.temoignages || []
   );
@@ -212,41 +210,6 @@ export default function EventForm({ event }: Props) {
       {tab === "presentation" && isEdit && (
         <div className="bg-white rounded-2xl p-6 shadow-sm space-y-6">
           <div>
-            <label className={labelClass}>Image de couverture principale</label>
-            <input type="hidden" name="image_url" value={mainImage} />
-            {mainImage && (
-              <div className="mb-3 relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={mainImage}
-                  alt="Couverture"
-                  className="w-full max-h-64 object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => setMainImage("")}
-                  className="absolute top-2 right-2 bg-brun/80 text-white text-xs px-3 py-1 rounded-full hover:bg-brun"
-                >
-                  Retirer
-                </button>
-              </div>
-            )}
-            <ImageDropzone
-              prefix="events"
-              onUploaded={(urls) => setMainImage(urls[0])}
-              label={
-                mainImage
-                  ? "Remplacer l'image de couverture"
-                  : "Glissez ou cliquez pour ajouter une image"
-              }
-            />
-            <p className="text-xs text-brun-light/60 mt-2">
-              Image principale affichée en haut de la page événement. Sera enregistrée
-              avec le formulaire.
-            </p>
-          </div>
-
-          <div>
             <label className={labelClass}>Texte de présentation</label>
             <textarea
               name="presentation_text"
@@ -258,10 +221,12 @@ export default function EventForm({ event }: Props) {
           </div>
 
           <div>
-            <label className={labelClass + " mb-3"}>Images additionnelles (galerie)</label>
+            <label className={labelClass + " mb-3"}>Images de présentation</label>
             <p className="text-xs text-brun-light/60 mb-3">
-              Les images sont liées immédiatement à l&apos;événement dès l&apos;upload.
-              Modifiez la légende et le copyright directement dans la liste.
+              La première image de la liste sera utilisée comme image de couverture
+              de l&apos;événement. Glissez-déposez les vignettes pour réorganiser
+              l&apos;ordre. Les images sont liées immédiatement dès l&apos;upload ;
+              modifiez la légende et le copyright directement dans la liste.
             </p>
             <ImageManager
               eventId={event!.id}

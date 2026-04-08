@@ -33,9 +33,6 @@ function parseEventFormData(formData: FormData): Partial<EventInput> {
   const notes = formData.get("notes") as string;
   if (notes !== null) data.notes = notes || null;
 
-  const image_url = formData.get("image_url") as string;
-  if (image_url !== null) data.image_url = image_url || null;
-
   // Dates : sérialisées en JSON
   const datesJson = formData.get("dates_json") as string;
   if (datesJson) {
