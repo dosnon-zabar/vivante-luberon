@@ -60,10 +60,10 @@ export default async function Accueil() {
             </p>
           )}
           {homeIntro ? (
-            <div className={`mt-14 text-xl max-w-2xl mx-auto ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`} style={{ fontFamily: "DM Sans, sans-serif", fontSize: "20px", lineHeight: "140%" }}
+            <div className={`mt-14 text-xl mx-auto ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`} style={{ fontFamily: "DM Sans, sans-serif", fontSize: "20px", lineHeight: "140%", maxWidth: "650px" }}
               dangerouslySetInnerHTML={{ __html: homeIntro }} />
           ) : (
-            <p className={`mt-14 text-xl max-w-2xl mx-auto ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`} style={{ fontFamily: "DM Sans, sans-serif", fontSize: "20px", lineHeight: "140%" }}>
+            <p className={`mt-14 text-xl mx-auto ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`} style={{ fontFamily: "DM Sans, sans-serif", fontSize: "20px", lineHeight: "140%", maxWidth: "650px" }}>
               Cuisine vivante, festive et populaire
               <br />
               au c&oelig;ur du {baseline}

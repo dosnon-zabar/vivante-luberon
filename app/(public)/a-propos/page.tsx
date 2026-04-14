@@ -25,7 +25,7 @@ export default async function AProposPage() {
         >
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
           <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pb-10 sm:pb-14 w-full">
-            <h1 className="font-serif text-5xl sm:text-7xl font-bold text-white drop-shadow-lg">
+            <h1 className="font-serif text-5xl sm:text-7xl lg:text-8xl text-white mt-2 drop-shadow-lg">
               {config?.about_page_title ?? "À propos"}
             </h1>
           </div>
@@ -37,13 +37,13 @@ export default async function AProposPage() {
       {/* Histoire et valeurs */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 mb-16 pt-12 sm:pt-16">
         {!config?.about_header_image && (
-          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-brun">{config?.about_page_title ?? "À propos"}</h1>
+          <h1 className="font-serif text-5xl sm:text-7xl lg:text-8xl text-brun">{config?.about_page_title ?? "À propos"}</h1>
         )}
         {config?.about_text ? (
-          <div className="mt-8 space-y-6 text-brun-light leading-relaxed text-lg"
+          <div className="rich-content mt-8 space-y-6 text-brun-light leading-relaxed text-lg" style={{ maxWidth: "650px" }}
             dangerouslySetInnerHTML={{ __html: config.about_text }} />
         ) : (
-          <div className="mt-8 space-y-6 text-brun-light leading-relaxed text-lg">
+          <div className="mt-8 space-y-6 text-brun-light leading-relaxed text-lg" style={{ maxWidth: "650px" }}>
             <p>
               <strong className="text-brun">Vivante</strong> est né d&apos;une
               envie simple : remettre la cuisine au centre du village. Pas la
