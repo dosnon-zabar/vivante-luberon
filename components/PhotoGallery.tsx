@@ -87,7 +87,7 @@ export default function PhotoGallery({ images }: { images: GalleryImage[] }) {
       {/* Lightbox / Diaporama */}
       {lightboxIndex !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center"
           onClick={close}
         >
           {/* Close button */}
@@ -116,17 +116,14 @@ export default function PhotoGallery({ images }: { images: GalleryImage[] }) {
 
           {/* Image */}
           <div
-            className="relative max-w-[90vw] max-h-[80vh]"
+            className="flex flex-col items-center justify-center px-16 py-8 max-h-[100vh] w-full"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={images[lightboxIndex].url}
               alt={images[lightboxIndex].caption || `Photo ${lightboxIndex + 1}`}
-              width={1200}
-              height={800}
-              className="max-h-[80vh] w-auto h-auto object-contain rounded-lg"
-              sizes="90vw"
-              priority
+              className="max-h-[85vh] max-w-[90vw] w-auto h-auto object-contain"
             />
             {/* Légende, crédits, compteur */}
             <div className="mt-3 text-center space-y-1">
