@@ -66,14 +66,13 @@ export default async function EvenementDetailPage({ params }: Props) {
           Retour
         </Link>
 
-        {/* Titre et date sur l'image */}
+        {/* Titre et lieu sur l'image */}
         <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 pb-10 sm:pb-14 w-full">
-          <p className="text-sm font-semibold text-orange uppercase tracking-wide">
-            {formatDateLong(mainDate)}
-            {evenement.dates[0]?.location && (
-              <span className="text-white/70"> — {evenement.dates[0].location}</span>
-            )}
-          </p>
+          {evenement.dates[0]?.location && (
+            <p className="text-sm font-semibold text-white/70 uppercase tracking-wide">
+              {evenement.dates[0].location}
+            </p>
+          )}
           <h1 className="font-serif text-5xl sm:text-7xl lg:text-8xl text-white mt-2 drop-shadow-lg">
             {evenement.titre}
           </h1>
@@ -194,7 +193,7 @@ export default async function EvenementDetailPage({ params }: Props) {
               {/* Dates */}
               {evenement.dates.length > 0 ? (
                 <div className="bg-white rounded-xl p-5">
-                  <h3 className="font-serif text-lg text-brun mb-3">
+                  <h3 className="font-serif text-3xl text-brun mb-3">
                     {evenement.dates.length > 1 ? "Dates" : "Date"}
                   </h3>
                   <ul className="space-y-4">
@@ -231,7 +230,7 @@ export default async function EvenementDetailPage({ params }: Props) {
                 </div>
               ) : (
                 <div className="bg-white rounded-xl p-5">
-                  <h3 className="font-serif text-lg text-brun mb-3">Infos pratiques</h3>
+                  <h3 className="font-serif text-3xl text-brun mb-3">Infos pratiques</h3>
                   <ul className="space-y-3 text-sm">
                     <li className="flex justify-between">
                       <span className="text-brun-light">Date</span>

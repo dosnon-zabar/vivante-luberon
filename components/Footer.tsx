@@ -19,41 +19,41 @@ export default function Footer({ config }: { config: SiteConfig | null }) {
   ].filter(s => s.url);
 
   return (
-    <footer className="relative bg-brun text-creme/80 mt-auto overflow-hidden">
+    <footer className="relative text-white mt-auto overflow-hidden" style={{ backgroundColor: "#8EC8B0" }}>
       <div className="absolute top-6 right-10 opacity-20"><EtoileOrange className="w-10 h-10" /></div>
       <div className="absolute bottom-8 left-12 opacity-15"><EtoileBleu className="w-6 h-6" /></div>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="font-serif text-2xl text-white mb-3">{title}</h3>
+            <h3 className="text-2xl text-white mb-3 uppercase tracking-wide" style={{ fontFamily: "Nunito, sans-serif" }}>{title}</h3>
             {footerHtml ? (
-              <div className="text-sm leading-relaxed text-creme/50" dangerouslySetInnerHTML={{ __html: footerHtml }} />
+              <div className="text-sm leading-relaxed text-white" dangerouslySetInnerHTML={{ __html: footerHtml }} />
             ) : (
-              <p className="text-sm leading-relaxed text-creme/50">
+              <p className="text-sm leading-relaxed text-white">
                 {subtitle}
               </p>
             )}
           </div>
 
           <div>
-            <h4 className="font-serif text-lg text-white mb-3">Navigation</h4>
+            <h4 className="font-serif text-2xl text-white mb-3">Navigation</h4>
             <ul className="space-y-2 text-sm">
               {config?.recipes_page_enabled !== false && (
-                <li><Link href="/recettes" className="hover:text-orange transition-colors">Recettes</Link></li>
+                <li><Link href="/recettes" className="hover:text-jaune transition-colors">Recettes</Link></li>
               )}
               {config?.events_page_enabled !== false && (
-                <li><Link href="/evenements" className="hover:text-orange transition-colors">Événements</Link></li>
+                <li><Link href="/evenements" className="hover:text-jaune transition-colors">Événements</Link></li>
               )}
               {config?.about_page_enabled !== false && (
-                <li><Link href="/a-propos" className="hover:text-orange transition-colors">À propos</Link></li>
+                <li><Link href="/a-propos" className="hover:text-jaune transition-colors">À propos</Link></li>
               )}
             </ul>
           </div>
 
           <div>
-            <h4 className="font-serif text-lg text-white mb-3">Contact</h4>
-            <ul className="space-y-2 text-sm text-creme/50">
+            <h4 className="font-serif text-2xl text-white mb-3">Contact</h4>
+            <ul className="space-y-2 text-sm text-white">
               {email && <li>{email}</li>}
               {phone && <li>{phone}</li>}
               {address && <li>{address}</li>}
@@ -62,7 +62,7 @@ export default function Footer({ config }: { config: SiteConfig | null }) {
               <div className="flex gap-4 mt-4">
                 {socialLinks.map(s => (
                   <a key={s.label} href={s.url!} target="_blank" rel="noopener noreferrer"
-                    className="text-creme/30 hover:text-orange transition-colors" aria-label={s.label}>
+                    className="text-white hover:text-jaune transition-colors" aria-label={s.label}>
                     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d={s.icon} /></svg>
                   </a>
                 ))}
@@ -71,7 +71,7 @@ export default function Footer({ config }: { config: SiteConfig | null }) {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-creme/10 text-center text-xs text-creme/25">
+        <div className="mt-10 pt-6 border-t border-white/30 text-center text-xs text-white">
           &copy; {new Date().getFullYear()} {title}{subtitle ? ` — ${subtitle}` : ""}. Tous droits réservés.
         </div>
       </div>

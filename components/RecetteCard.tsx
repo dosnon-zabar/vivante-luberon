@@ -10,7 +10,7 @@ export default function RecetteCard({ recette }: Props) {
   return (
     <Link
       href={`/recettes/${recette.slug}`}
-      className="group block bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5"
+      className="group block bg-white rounded-2xl overflow-hidden border border-stone-100 hover:shadow-lg transition-all hover:-translate-y-0.5"
     >
       <div className="relative aspect-[4/3] overflow-hidden">
         <ImageWithFallback
@@ -22,13 +22,15 @@ export default function RecetteCard({ recette }: Props) {
         />
       </div>
       <div className="p-4">
-        <h3 className="font-serif text-lg text-brun group-hover:text-orange transition-colors">
+        <h3 className="font-serif text-3xl text-brun group-hover:text-orange transition-colors">
           {recette.nom}
         </h3>
-        <p className="text-xs text-brun-light mt-1">
-          Par {recette.auteur.nom} &middot; {recette.saison}
-        </p>
         <div className="flex flex-wrap gap-1.5 mt-3">
+          {recette.saison && recette.saison.split(/,\s*/).map((s) => (
+            <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-jaune/20 text-brun font-medium">
+              {s.trim()}
+            </span>
+          ))}
           {recette.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300..700&family=DM+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=Inter:wght@300..700&family=DM+Sans:wght@400;500;600;700&family=Nunito:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme inline {
@@ -34,13 +34,13 @@
   --color-ocre: #F2C94C;
   --color-ocre-light: #FBE8A6;
 
-  --font-serif: "Playfair Display", Georgia, serif;
+  --font-serif: "Amatic SC", cursive;
   --font-sans: "DM Sans", "Inter", system-ui, sans-serif;
   --font-display: "DM Sans", system-ui, sans-serif;
 }
 
 body {
-  background-color: var(--color-creme);
+  background-color: #FFFFFF;
   color: var(--color-brun);
   font-family: var(--font-sans);
 }

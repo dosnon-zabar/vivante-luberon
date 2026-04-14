@@ -2,7 +2,7 @@ import Link from "next/link";
 import { fetchRecettes, fetchEvenements, fetchSiteConfig } from "@/lib/api";
 import RecetteCard from "@/components/RecetteCard";
 import EvenementCard from "@/components/EvenementCard";
-import { EtoileOrange, EtoileBleu, Soleil, DemiSoleil, CourbePeche, OndeVerte } from "@/components/Motifs";
+import { EtoileOrange, OndeVerte } from "@/components/Motifs";
 
 export default async function Accueil() {
   const today = new Date().toISOString().split("T")[0];
@@ -11,7 +11,7 @@ export default async function Accueil() {
   const [config, { recettes }, { evenements: prochainsEvenements }, { evenements: eventsPasses }] = await Promise.all([
     fetchSiteConfig(),
     fetchRecettes({ limit: 6, status: "publiee" }),
-    fetchEvenements({ limit: 3, date_from: today, sort_by: "event_date", sort_order: "asc", status: "publiee" }),
+    fetchEvenements({ limit: 3, date_from: today, sort_by: "event_date", sort_order: "desc", status: "publiee" }),
     fetchEvenements({ limit: 3, date_to: yesterday, sort_by: "event_date", sort_order: "desc", status: "publiee" }),
   ]);
 
@@ -25,9 +25,9 @@ export default async function Accueil() {
   const showAbout = config?.home_about_enabled !== false;
   return (
     <>
-      {/* Hero — image de fond ou fond clair avec motifs */}
+      {/* Hero — image de fond ou fond blanc avec pictos */}
       <section
-        className={`relative overflow-hidden py-24 sm:py-32 ${config?.home_hero_image ? "bg-cover bg-center" : "bg-creme"}`}
+        className={`relative overflow-hidden py-28 sm:py-36 ${config?.home_hero_image ? "bg-cover bg-center" : ""}`}
         style={config?.home_hero_image ? { backgroundImage: `url(${config.home_hero_image})` } : undefined}
       >
         {/* Overlay sombre si image de fond */}
@@ -35,50 +35,35 @@ export default async function Accueil() {
           <div className="absolute inset-0 bg-brun/50" />
         )}
 
-        {/* Motifs décoratifs — masqués si image de fond */}
+        {/* Pictos décoratifs — masqués si image de fond */}
         {!config?.home_hero_image && (
           <>
-            <div className="absolute top-6 left-8 sm:left-16">
-              <EtoileOrange className="w-10 h-10 sm:w-14 sm:h-14" />
-            </div>
-            <div className="absolute top-20 right-12 sm:right-24">
-              <EtoileBleu className="w-5 h-5" />
-            </div>
-            <div className="absolute bottom-8 right-8 sm:right-20">
-              <Soleil className="w-16 h-16 sm:w-20 sm:h-20 opacity-80" />
-            </div>
-            <div className="absolute bottom-0 left-16 sm:left-32">
-              <DemiSoleil className="w-20 h-10 opacity-50" />
-            </div>
-            <div className="absolute top-1/3 left-4 sm:left-10 opacity-40">
-              <CourbePeche className="w-8 h-16" />
-            </div>
-            <div className="absolute top-12 right-1/3 opacity-50">
-              <OndeVerte className="w-12 h-6" />
-            </div>
-            <div className="absolute bottom-20 left-1/4 opacity-30">
-              <EtoileOrange className="w-6 h-6" />
-            </div>
+            <img src="/picto-soleil.png" alt="" className="absolute -top-16 -right-16 w-52 sm:w-72 opacity-80 pointer-events-none" />
+            <img src="/picto-etoile.png" alt="" className="absolute top-12 left-[10%] w-20 sm:w-28 opacity-50 pointer-events-none -rotate-12" />
+            <img src="/picto-onde.png" alt="" className="absolute bottom-16 right-[15%] w-16 sm:w-24 opacity-60 pointer-events-none" />
+            <img src="/picto-etoile.png" alt="" className="absolute bottom-6 left-[30%] w-10 sm:w-14 opacity-30 pointer-events-none rotate-45" />
           </>
         )}
 
         <div className={`relative max-w-6xl mx-auto px-4 sm:px-6 text-center ${config?.home_hero_image ? "text-ivoire" : ""}`}>
-          <h1 className={`font-serif text-6xl sm:text-8xl font-bold tracking-tight ${config?.home_hero_image ? "text-ivoire drop-shadow-lg" : "text-brun"}`}>
+          <h1 className={`text-5xl sm:text-7xl font-normal uppercase tracking-tight ${config?.home_hero_image ? "text-ivoire drop-shadow-lg" : "text-brun"}`} style={{ fontFamily: "Nunito, sans-serif" }}>
             {title}
           </h1>
-          <p className={`mt-2 text-sm uppercase tracking-[0.3em] ${config?.home_hero_image ? "text-ivoire/80" : "text-brun-light"}`}>
-            &mdash; {subtitle} &mdash;
+          <p className={`mt-2 text-sm uppercase tracking-[0.3em] flex items-center justify-center gap-3 ${config?.home_hero_image ? "text-ivoire/80" : "text-brun-light"}`} style={{ fontFamily: "Nunito, sans-serif" }}>
+            <img src="/dash.png" alt="" className="h-3 w-auto opacity-60" />
+            {subtitle}
+            <img src="/dash.png" alt="" className="h-3 w-auto opacity-60 scale-x-[-1]" />
           </p>
           {baseline && (
-            <p className={`mt-1 text-xs uppercase tracking-[0.2em] ${config?.home_hero_image ? "text-ivoire/60" : "text-brun-light/60"}`}>
+            <p className={`mt-1 text-xs uppercase tracking-[0.2em] ${config?.home_hero_image ? "text-ivoire/60" : "text-brun-light/60"}`} style={{ fontFamily: "Nunito, sans-serif" }}>
               {baseline}
             </p>
           )}
           {homeIntro ? (
-            <div className={`mt-8 text-xl sm:text-2xl max-w-2xl mx-auto leading-relaxed font-serif italic ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`}
+            <div className={`mt-14 text-xl max-w-2xl mx-auto ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`} style={{ fontFamily: "DM Sans, sans-serif", fontSize: "20px", lineHeight: "140%" }}
               dangerouslySetInnerHTML={{ __html: homeIntro }} />
           ) : (
-            <p className={`mt-8 text-xl sm:text-2xl max-w-2xl mx-auto leading-relaxed font-serif italic ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`}>
+            <p className={`mt-14 text-xl max-w-2xl mx-auto ${config?.home_hero_image ? "text-ivoire/90" : "text-brun-light"}`} style={{ fontFamily: "DM Sans, sans-serif", fontSize: "20px", lineHeight: "140%" }}>
               Cuisine vivante, festive et populaire
               <br />
               au c&oelig;ur du {baseline}
@@ -87,7 +72,7 @@ export default async function Accueil() {
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/evenements"
-              className="inline-flex items-center justify-center px-7 py-3.5 bg-orange text-white font-semibold rounded-full hover:bg-orange-light transition-colors shadow-sm"
+              className="inline-flex items-center justify-center px-7 py-3.5 bg-vert-eau text-white font-semibold rounded-full hover:bg-vert-eau-light transition-colors shadow-sm"
             >
               Nos prochains événements
             </Link>
@@ -103,13 +88,14 @@ export default async function Accueil() {
 
       {/* Prochains événements */}
       {showEvents && prochainsEvenements.length > 0 && (
-        <section className="py-16 sm:py-20">
+        <section className="relative py-20 sm:py-28">
+          <img src="/picto-etoile.png" alt="" className="absolute -top-6 right-[5%] w-24 sm:w-36 opacity-30 pointer-events-none -rotate-12" />
+          <img src="/picto-onde.png" alt="" className="absolute bottom-10 left-[8%] w-12 sm:w-16 opacity-25 pointer-events-none rotate-12 hidden sm:block" />
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <div className="flex items-end justify-between mb-10">
+            <div className="flex items-end justify-between mb-12">
               <div className="flex items-center gap-3">
-                <EtoileOrange className="w-7 h-7 hidden sm:block" />
                 <div>
-                  <h2 className="font-serif text-3xl sm:text-4xl text-brun">
+                  <h2 className="font-serif text-5xl font-bold text-brun">
                     {config?.home_events_title ?? "Prochains événements"}
                   </h2>
                   <p className="mt-2 text-brun-light">
@@ -143,11 +129,11 @@ export default async function Accueil() {
 
       {/* Événements passés */}
       {showPastEvents && eventsPasses.length > 0 && (
-        <section className="py-16 sm:py-20 bg-white/40">
+        <section className="relative py-20 sm:py-28 bg-stone-50">
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
             <div className="flex items-end justify-between mb-10">
               <div>
-                <h2 className="font-serif text-3xl sm:text-4xl text-brun-light">
+                <h2 className="font-serif text-5xl font-bold text-brun-light">
                   {config?.home_past_events_title ?? "Événements passés"}
                 </h2>
                 <p className="mt-2 text-brun-light/70">
@@ -179,13 +165,14 @@ export default async function Accueil() {
       )}
 
       {/* Nos recettes */}
-      {showRecipes && <section className="py-16 sm:py-20 bg-white/60">
+      {showRecipes && <section className="relative py-20 sm:py-28">
+        <img src="/picto-soleil.png" alt="" className="absolute -bottom-12 -left-12 w-40 sm:w-56 opacity-25 pointer-events-none" />
+        <img src="/picto-etoile.png" alt="" className="absolute top-16 right-[10%] w-14 sm:w-20 opacity-20 pointer-events-none rotate-12 hidden sm:block" />
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex items-end justify-between mb-10">
+          <div className="flex items-end justify-between mb-12">
             <div className="flex items-center gap-3">
-              <EtoileBleu className="w-5 h-5 hidden sm:block" />
               <div>
-                <h2 className="font-serif text-3xl sm:text-4xl text-brun">
+                <h2 className="font-serif text-5xl font-bold text-brun">
                   {config?.home_recipes_title ?? "Nos recettes"}
                 </h2>
                 <p className="mt-2 text-brun-light">
@@ -218,15 +205,11 @@ export default async function Accueil() {
 
       {/* Qui sommes-nous */}
       {showAbout &&
-      <section className="relative py-16 sm:py-20 overflow-hidden">
-        <div className="absolute top-8 right-12 opacity-40">
-          <EtoileOrange className="w-8 h-8" />
-        </div>
-        <div className="absolute bottom-4 left-8 opacity-30">
-          <OndeVerte className="w-10 h-5" />
-        </div>
+      <section className="relative py-20 sm:py-28 bg-stone-50 overflow-hidden">
+        <img src="/picto-soleil.png" alt="" className="absolute -bottom-14 -right-14 w-44 sm:w-56 opacity-30 pointer-events-none" />
+        <img src="/picto-onde.png" alt="" className="absolute top-12 left-[8%] w-14 sm:w-20 opacity-30 pointer-events-none -rotate-12 hidden sm:block" />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="font-serif text-3xl sm:text-4xl text-brun">
+          <h2 className="font-serif text-5xl font-bold text-brun">
             {config?.home_about_title ?? "Qui sommes-nous ?"}
           </h2>
           {config?.home_about_text ? (
@@ -239,7 +222,7 @@ export default async function Accueil() {
           )}
           <Link
             href="/a-propos"
-            className="inline-flex items-center justify-center mt-8 px-7 py-3.5 bg-vert-eau text-brun font-semibold rounded-full hover:bg-vert-eau-light transition-colors"
+            className="inline-flex items-center justify-center mt-8 px-7 py-3.5 bg-vert-eau text-white font-semibold rounded-full hover:bg-vert-eau-light transition-colors"
           >
             En savoir plus
           </Link>

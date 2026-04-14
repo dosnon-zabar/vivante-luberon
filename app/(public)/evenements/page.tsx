@@ -17,17 +17,19 @@ export default async function EvenementsPage() {
 
   const [config, { evenements: aVenir }, { evenements: passes }] = await Promise.all([
     fetchSiteConfig(),
-    fetchEvenements({ limit: 20, date_from: today, sort_by: "event_date", sort_order: "asc", status: "publiee" }),
+    fetchEvenements({ limit: 20, date_from: today, sort_by: "event_date", sort_order: "desc", status: "publiee" }),
     fetchEvenements({ limit: 20, date_to: new Date(Date.now() - 86400000).toISOString().split("T")[0], sort_by: "event_date", sort_order: "desc", status: "publiee" }),
   ]);
 
   const aucunEvent = aVenir.length === 0 && passes.length === 0;
 
   return (
-    <div className="py-12 sm:py-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+    <div className="relative py-12 sm:py-16 overflow-hidden">
+      <img src="/picto-etoile.png" alt="" className="absolute -top-8 -left-8 w-36 sm:w-48 opacity-20 pointer-events-none rotate-12" />
+      <img src="/picto-soleil.png" alt="" className="absolute bottom-16 right-[3%] w-32 sm:w-44 opacity-20 pointer-events-none hidden sm:block" />
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         <div className="mb-12">
-          <h1 className="font-serif text-4xl sm:text-5xl text-brun">
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-brun">
             {config?.events_page_title ?? "Événements"}
           </h1>
           {config?.events_intro ? (

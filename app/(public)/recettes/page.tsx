@@ -24,10 +24,13 @@ export default async function RecettesPage() {
   const allTags = [...new Set(recettes.flatMap((r) => r.tags))];
 
   return (
-    <div className="py-12 sm:py-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+    <div className="relative py-12 sm:py-16 overflow-hidden">
+      <img src="/picto-soleil.png" alt="" className="absolute -top-16 -right-16 w-48 sm:w-64 opacity-25 pointer-events-none" />
+      <img src="/picto-etoile.png" alt="" className="absolute bottom-20 left-[5%] w-20 sm:w-28 opacity-20 pointer-events-none rotate-12 hidden sm:block" />
+      <img src="/picto-onde.png" alt="" className="absolute top-[33%] right-[6%] w-12 sm:w-16 opacity-20 pointer-events-none -rotate-12 hidden sm:block" />
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
         <div className="mb-10">
-          <h1 className="font-serif text-4xl sm:text-5xl text-brun">
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold text-brun">
             {config?.recipes_page_title ?? "Nos recettes"}
           </h1>
           {config?.recipes_intro ? (
@@ -52,7 +55,7 @@ export default async function RecettesPage() {
                   className={`text-sm px-3 py-1 rounded-full mr-2 mb-2 transition-colors ${
                     saison === "toutes"
                       ? "bg-terracotta text-ivoire"
-                      : "bg-white text-brun-light hover:bg-argile/20"
+                      : "bg-stone-100 text-brun-light hover:bg-argile/20"
                   }`}
                 >
                   {saison === "toutes" ? "Toutes" : saison}
@@ -67,7 +70,7 @@ export default async function RecettesPage() {
                 {allTags.map((tag) => (
                   <button
                     key={tag}
-                    className="text-sm px-3 py-1 rounded-full mr-2 mb-2 bg-white text-brun-light hover:bg-sauge/10 transition-colors"
+                    className="text-sm px-3 py-1 rounded-full mr-2 mb-2 bg-stone-100 text-brun-light hover:bg-sauge/10 transition-colors"
                   >
                     {tag}
                   </button>

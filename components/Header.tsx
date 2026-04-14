@@ -29,15 +29,16 @@ export default function Header({ config }: { config: SiteConfig | null }) {
   const subtitle = config?.subtitle ?? "Manger les lieux";
 
   return (
-    <header className="bg-creme/90 backdrop-blur-sm border-b border-brun/5 sticky top-0 z-50">
+    <header className="bg-white/90 backdrop-blur-sm border-b border-brun/5 sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-20">
           <Link href="/" className="flex items-center gap-3">
+            <img src="/logo-vivante.png" alt={title} className="h-12 w-auto" />
             <div className="leading-tight">
-              <span className="font-serif text-2xl text-brun font-bold tracking-wide">
+              <span className="text-xl text-brun font-semibold uppercase tracking-[0.15em]" style={{ fontFamily: "Nunito, sans-serif" }}>
                 {title}
               </span>
-              <span className="block text-[9px] uppercase tracking-[0.25em] text-brun-light/70">
+              <span className="block text-[9px] uppercase tracking-[0.25em] text-brun-light/70" style={{ fontFamily: "Nunito, sans-serif" }}>
                 {subtitle}
               </span>
             </div>
@@ -48,11 +49,12 @@ export default function Header({ config }: { config: SiteConfig | null }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`text-sm font-medium transition-colors hover:text-orange ${
+                className={`text-sm font-medium uppercase tracking-wide transition-colors hover:text-vert-eau ${
                   pathname === link.href
-                    ? "text-orange"
+                    ? "text-vert-eau"
                     : "text-brun-light"
                 }`}
+                style={{ fontFamily: "Nunito, sans-serif" }}
               >
                 {link.label}
               </Link>
@@ -81,9 +83,10 @@ export default function Header({ config }: { config: SiteConfig | null }) {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className={`text-sm font-medium px-2 py-1 ${
-                  pathname === link.href ? "text-orange" : "text-brun-light"
+                className={`text-sm font-medium uppercase tracking-wide px-2 py-1 ${
+                  pathname === link.href ? "text-vert-eau" : "text-brun-light"
                 }`}
+                style={{ fontFamily: "Nunito, sans-serif" }}
               >
                 {link.label}
               </Link>

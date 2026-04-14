@@ -33,6 +33,7 @@ export async function fetchSiteConfig(): Promise<SiteConfig | null> {
 
     // Resolve relative image URLs to absolute
     if (data.home_hero_image) data.home_hero_image = resolveImageUrl(data.home_hero_image) ?? null;
+    if (data.about_header_image) data.about_header_image = resolveImageUrl(data.about_header_image) ?? null;
     if (data.home_seo_image) data.home_seo_image = resolveImageUrl(data.home_seo_image) ?? null;
     if (data.recipes_seo_image) data.recipes_seo_image = resolveImageUrl(data.recipes_seo_image) ?? null;
     if (data.events_seo_image) data.events_seo_image = resolveImageUrl(data.events_seo_image) ?? null;

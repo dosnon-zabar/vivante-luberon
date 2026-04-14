@@ -26,6 +26,7 @@ export type SiteConfig = {
   events_seo_title: string | null;
   events_seo_desc: string | null;
   events_seo_image: string | null;
+  about_header_image: string | null;
   about_text: string | null;
   about_seo_title: string | null;
   about_seo_desc: string | null;
