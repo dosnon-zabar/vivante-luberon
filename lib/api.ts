@@ -93,6 +93,9 @@ function mapRecipe(r: ApiRecipe): Recette {
     saison: r.recipe_seasons.map((s) => s.season.name).join(", ") || "toutes saisons",
     presentation: r.presentation,
     portion_type: r.portion_type?.name ?? null,
+    seo_title: r.seo_title,
+    seo_desc: r.seo_desc,
+    seo_image: resolveImageUrl(r.seo_image),
     auteur: r.creator
       ? { id: r.creator.id, nom: `${r.creator.first_name} ${r.creator.last_name}` }
       : { id: "", nom: "Inconnu" },
@@ -204,6 +207,9 @@ function mapEvent(e: ApiEvent): Evenement {
     presentation: e.presentation_text,
     compte_rendu: e.report_text,
     notes: e.notes,
+    seo_title: e.seo_title,
+    seo_desc: e.seo_desc,
+    seo_image: resolveImageUrl(e.seo_image),
     team_id: e.team_id,
     photo_url: resolveImageUrl(
       e.event_images

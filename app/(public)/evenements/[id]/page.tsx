@@ -1,6 +1,7 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { fetchEvenement } from "@/lib/api";
+import { fetchEvenement, fetchSiteConfig } from "@/lib/api";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import PhotoGallery from "@/components/PhotoGallery";
 import type { EventDate } from "@/lib/types";
@@ -8,6 +9,32 @@ import type { EventDate } from "@/lib/types";
 type Props = {
   params: Promise<{ id: string }>;
 };
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim();
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const [evenement, config] = await Promise.all([fetchEvenement(id), fetchSiteConfig()]);
+  if (!evenement) return { title: "Événement" };
+
+  const siteName = config?.title ?? "Vivante";
+  const title = evenement.seo_title || `${evenement.titre} - ${siteName}`;
+  const fallbackText = evenement.presentation || evenement.description || evenement.compte_rendu;
+  const description = evenement.seo_desc || (fallbackText ? stripHtml(fallbackText).slice(0, 200) : undefined);
+  const image = evenement.seo_image || evenement.photo_url;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
+  };
+}
 
 function formatDateLong(dateStr: string | null) {
   if (!dateStr) return "Date à confirmer";

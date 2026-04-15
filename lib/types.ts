@@ -80,6 +80,9 @@ export type Recette = {
   auteur: { id: string; nom: string };
   presentation?: string | null;
   portion_type?: string | null;
+  seo_title?: string | null;
+  seo_desc?: string | null;
+  seo_image?: string | null;
   ingredients: { nom: string; quantite: number; unite: string }[];
   instructions: string;
   etapes: { titre?: string | null; texte: string; image_url?: string }[];
@@ -112,6 +115,9 @@ export type Evenement = {
   presentation: string | null;
   compte_rendu: string | null;
   notes: string | null;
+  seo_title?: string | null;
+  seo_desc?: string | null;
+  seo_image?: string | null;
   photo_url?: string;
   team_id: string | null;
   images: { id?: string; type: "cover" | "report"; url: string; caption?: string; copyright?: string; sort_order?: number }[];
@@ -136,6 +142,9 @@ export type ApiRecipe = {
   name: string;
   slug: string | null;
   presentation: string | null;
+  seo_title: string | null;
+  seo_desc: string | null;
+  seo_image: string | null;
   portion_type: { id: string; name: string } | null;
   serving_count: number;
   status: string | null;
@@ -189,6 +198,9 @@ export type ApiEvent = {
   presentation_text: string | null;
   report_text: string | null;
   notes: string | null;
+  seo_title: string | null;
+  seo_desc: string | null;
+  seo_image: string | null;
   status: EventStatus | null;
   team_id: string | null;
   created_at: string;

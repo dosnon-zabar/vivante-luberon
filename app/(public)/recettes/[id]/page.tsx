@@ -1,12 +1,38 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { fetchRecette } from "@/lib/api";
+import { fetchRecette, fetchSiteConfig } from "@/lib/api";
 import { formatIngredientNatural } from "@/lib/format-ingredient";
 import ImageWithFallback from "@/components/ImageWithFallback";
 
 type Props = {
   params: Promise<{ id: string }>;
 };
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim();
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const [recette, config] = await Promise.all([fetchRecette(id), fetchSiteConfig()]);
+  if (!recette) return { title: "Recette" };
+
+  const siteName = config?.title ?? "Vivante";
+  const title = recette.seo_title || `${recette.nom} - ${siteName}`;
+  const description = recette.seo_desc || (recette.presentation ? stripHtml(recette.presentation).slice(0, 200) : undefined);
+  const image = recette.seo_image || recette.photo_url;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: image ? [image] : undefined,
+    },
+  };
+}
 
 export default async function RecetteDetailPage({ params }: Props) {
   const { id } = await params;
