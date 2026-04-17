@@ -5,7 +5,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "chefmate-admin.zabar.fr",
+        hostname: "admin.brigades.fr",
+      },
+      {
+        protocol: "https",
+        hostname: "chefmate-admin.zabar.fr", // legacy, keep during transition
       },
     ],
   },

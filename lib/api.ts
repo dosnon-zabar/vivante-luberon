@@ -1,8 +1,9 @@
 import type { Recette, Evenement, SiteConfig, ApiRecipe, ApiEvent, ApiResponse } from "./types";
+import { ADMIN_API_URL, ADMIN_ROOT_URL } from "./admin-url";
 
-const BASE_URL = process.env.CHEFMATE_API_URL || "https://chefmate-admin.zabar.fr/api/v1";
+const BASE_URL = ADMIN_API_URL;
 const API_KEY = process.env.CHEFMATE_API_KEY || "";
-const CDN_BASE = "https://chefmate-admin.zabar.fr";
+const CDN_BASE = ADMIN_ROOT_URL;
 
 function headers(): HeadersInit {
   return {

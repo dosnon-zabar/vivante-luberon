@@ -22,7 +22,7 @@ export const recettes: Recette[] = [
     instructions:
       "Dénoyauter les olives. Mixer grossièrement les olives, les câpres, les anchois et l'ail. Ajouter l'huile d'olive en filet en continuant de mixer. Terminer avec le jus de citron. Servir sur du pain grillé frotté à l'ail.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/tapenade-noire.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/tapenade-noire.jpg",
     created_at: "2025-03-15T10:00:00Z",
   },
   {
@@ -48,7 +48,7 @@ export const recettes: Recette[] = [
     instructions:
       "Couper tous les légumes en gros dés. Faire revenir séparément chaque légume dans l'huile d'olive. Réunir dans une cocotte, ajouter l'ail écrasé et les herbes. Cuire à couvert à feu doux pendant 45 minutes en remuant régulièrement. Servir tiède ou froid.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/ratatouille.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/ratatouille.jpg",
     created_at: "2025-04-02T14:30:00Z",
   },
   {
@@ -74,7 +74,7 @@ export const recettes: Recette[] = [
     instructions:
       "Préparer l'aïoli : piler l'ail au mortier, incorporer le jaune d'œuf, monter à l'huile d'olive comme une mayonnaise. Pocher la morue. Cuire les légumes séparément à l'eau salée. Disposer le tout sur un grand plat. Servir l'aïoli à part dans un mortier.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/aioli.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/aioli.jpg",
     created_at: "2025-05-10T09:00:00Z",
   },
   {
@@ -99,7 +99,7 @@ export const recettes: Recette[] = [
     instructions:
       "Mélanger farine, sel, levure et eau. Pétrir 10 minutes. Incorporer les olives dénoyautées et l'huile d'olive. Laisser lever 1h30. Étaler en forme de feuille, inciser des ouvertures en biais. Badigeonner d'huile d'olive et de fleur de sel. Cuire 20 min à 220°C.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/fougasse.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/fougasse.jpg",
     created_at: "2025-02-20T16:00:00Z",
   },
   {
@@ -125,7 +125,7 @@ export const recettes: Recette[] = [
     instructions:
       "Cuire les haricots blancs 1h dans l'eau salée. Ajouter les haricots verts et courgettes coupés. Après 15 min, ajouter les tomates et les pâtes. Pendant ce temps, préparer le pistou : piler basilic et ail au mortier, incorporer le parmesan et l'huile d'olive. Servir la soupe chaude avec le pistou à part.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/soupe-pistou.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/soupe-pistou.jpg",
     created_at: "2025-06-01T11:00:00Z",
   },
   {
@@ -151,7 +151,7 @@ export const recettes: Recette[] = [
     instructions:
       "La veille, couper le bœuf en gros morceaux et le faire mariner dans le vin rouge avec les carottes, oignons, bouquet garni et zeste d'orange. Le lendemain, faire revenir les lardons, puis la viande égouttée. Ajouter la marinade et les légumes. Cuire à couvert à feu très doux pendant 3 heures minimum. Ajouter les olives 30 min avant la fin.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/daube.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/daube.jpg",
     created_at: "2025-01-10T18:00:00Z",
   },
   {
@@ -176,7 +176,7 @@ export const recettes: Recette[] = [
     instructions:
       "Couper tous les légumes en rondelles fines. Disposer les rondelles en alternance debout dans un plat à gratin huilé et frotté à l'ail. Intercaler des feuilles de thym. Arroser d'huile d'olive, saler et poivrer. Cuire 1h à 180°C en arrosant régulièrement du jus de cuisson.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/tian.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/tian.jpg",
     created_at: "2025-07-05T12:00:00Z",
   },
   {
@@ -198,7 +198,7 @@ export const recettes: Recette[] = [
     instructions:
       "Rincer et désarêter les anchois. Les piler au mortier avec l'ail. Monter progressivement à l'huile d'olive. Ajouter un filet de vinaigre. Servir avec des légumes crus de saison : carottes, céleri, radis, fenouil, poivrons.",
     etapes: [],
-    photo_url: "https://chefmate-admin.zabar.fr/cdn/recettes/anchoiade.jpg",
+    photo_url: "https://admin.brigades.fr/cdn/recettes/anchoiade.jpg",
     created_at: "2025-08-20T10:00:00Z",
   },
 ];

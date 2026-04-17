@@ -36,7 +36,7 @@ lib/
 
 ## Prochaines étapes
 
-1. **Branchement API ChefMate** — Implémenter les fonctions dans `lib/api.ts` (base URL: `https://chefmate-admin.zabar.fr/api/v1`)
+1. **Branchement API ChefMate** — Implémenter les fonctions dans `lib/api.ts` (base URL: `https://admin.brigades.fr/api/v1`)
 2. **Auth admin** — Ajouter l'authentification JWT pour les pages `/admin`
 3. **Fonctionnalités dynamiques** — Filtres recettes, inscription événements, CRUD admin
 4. **Images** — Brancher les vraies images via le CDN ChefMate
