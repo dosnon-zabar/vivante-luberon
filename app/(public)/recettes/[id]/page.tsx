@@ -105,16 +105,56 @@ export default async function RecetteDetailPage({ params }: Props) {
               Pour {recette.nombre_parts} {recette.portion_type ?? "personnes"}
             </p>
             {recette.ingredients.length > 0 ? (
-              <ul className="space-y-3">
-                {recette.ingredients.map((ing, i) => (
-                  <li
-                    key={i}
-                    className="text-sm text-brun border-b border-stone-200 pb-2 last:border-0 last:pb-0"
-                  >
-                    {formatIngredientNatural(ing.nom, ing.quantite, ing.unite)}
-                  </li>
-                ))}
-              </ul>
+              (() => {
+                const groups = recette.ingredient_groups ?? [];
+                const hasGroups = groups.length > 0 && recette.ingredients.some((i) => i.group_id);
+                if (!hasGroups) {
+                  // Flat list (no groups → legacy display)
+                  return (
+                    <ul className="space-y-3">
+                      {recette.ingredients.map((ing, i) => (
+                        <li
+                          key={i}
+                          className="text-sm text-brun border-b border-stone-200 pb-2 last:border-0 last:pb-0"
+                        >
+                          {formatIngredientNatural(ing.nom, ing.quantite, ing.unite, ing.unite_pluriel, ing.nom_pluriel)}
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                }
+                // Grouped display
+                const ungrouped = recette.ingredients.filter((i) => !i.group_id);
+                return (
+                  <div className="space-y-6">
+                    {groups.map((g) => {
+                      const items = recette.ingredients.filter((i) => i.group_id === g.id);
+                      if (items.length === 0) return null;
+                      return (
+                        <div key={g.id}>
+                          <h3 className="font-serif text-lg text-brun mb-2">{g.titre}</h3>
+                          <ul className="space-y-2">
+                            {items.map((ing, i) => (
+                              <li key={i} className="text-sm text-brun border-b border-stone-200 pb-2 last:border-0 last:pb-0">
+                                {formatIngredientNatural(ing.nom, ing.quantite, ing.unite, ing.unite_pluriel, ing.nom_pluriel)}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                    {ungrouped.length > 0 && (
+                      <ul className="space-y-2">
+                        {ungrouped.map((ing, i) => (
+                          <li key={i} className="text-sm text-brun border-b border-stone-200 pb-2 last:border-0 last:pb-0">
+                            {formatIngredientNatural(ing.nom, ing.quantite, ing.unite, ing.unite_pluriel, ing.nom_pluriel)}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                );
+              })()
             ) : (
               <p className="text-sm text-brun-light/60 italic">
                 Pas d&apos;ingrédients renseignés

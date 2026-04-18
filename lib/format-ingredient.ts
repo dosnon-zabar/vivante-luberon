@@ -18,7 +18,8 @@ export function formatIngredientNatural(
   name: string,
   quantity: number | null,
   unitAbbrev: string | null | undefined,
-  unitAbbrevPlural?: string | null
+  unitAbbrevPlural?: string | null,
+  namePlural?: string | null
 ): string {
   const n = name.toLowerCase()
   const rawQty = quantity ?? 0
@@ -33,9 +34,14 @@ export function formatIngredientNatural(
 
   if (isPiece) {
     // Pluralize ingredient name when qty >= 2
-    const displayName = qty >= 2 && !n.endsWith("s") && !n.endsWith("x") && !n.endsWith("z")
-      ? n + "s"
-      : n
+    let displayName = n
+    if (qty >= 2) {
+      if (namePlural && namePlural.trim()) {
+        displayName = namePlural.trim().toLowerCase()
+      } else if (!n.endsWith("s") && !n.endsWith("x") && !n.endsWith("z")) {
+        displayName = n + "s"
+      }
+    }
     return `${qty} ${displayName}`
   }
 

@@ -104,9 +104,16 @@ function mapRecipe(r: ApiRecipe): Recette {
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((i) => ({
         nom: i.name,
+        nom_pluriel: i.name_plural ?? null,
         quantite: i.quantity,
         unite: i.unit.abbreviation,
+        unite_pluriel: i.unit.abbreviation_plural ?? null,
+        group_id: i.group_id,
       })),
+    ingredient_groups: (r.ingredient_groups ?? [])
+      .slice()
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((g) => ({ id: g.id, titre: g.title, sort_order: g.sort_order })),
     instructions: r.recipe_steps
       .sort((a, b) => a.sort_order - b.sort_order)
       .map((s) => {

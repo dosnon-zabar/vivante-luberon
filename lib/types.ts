@@ -83,7 +83,8 @@ export type Recette = {
   seo_title?: string | null;
   seo_desc?: string | null;
   seo_image?: string | null;
-  ingredients: { nom: string; quantite: number; unite: string }[];
+  ingredients: { nom: string; nom_pluriel?: string | null; quantite: number; unite: string; unite_pluriel?: string | null; group_id?: string | null }[];
+  ingredient_groups?: { id: string; titre: string; sort_order: number }[];
   instructions: string;
   etapes: { titre?: string | null; texte: string; image_url?: string }[];
   photo_url?: string;
@@ -174,12 +175,15 @@ export type ApiRecipe = {
   ingredients: {
     id: string;
     name: string;
+    name_plural: string | null;
     quantity: number;
     sort_order: number;
     comment: string | null;
-    unit: { id: string; name: string; abbreviation: string };
+    group_id: string | null;
+    unit: { id: string; name: string; abbreviation: string; abbreviation_plural?: string | null };
     aisle: { id: string; name: string; color: string } | null;
   }[];
+  ingredient_groups: { id: string; title: string; sort_order: number }[];
 };
 
 export type ApiEventDate = {
