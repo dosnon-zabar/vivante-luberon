@@ -7,10 +7,6 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "admin.brigades.fr",
       },
-      {
-        protocol: "https",
-        hostname: "chefmate-admin.zabar.fr", // legacy, keep during transition
-      },
     ],
   },
 };
