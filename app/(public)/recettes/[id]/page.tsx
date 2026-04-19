@@ -3,10 +3,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchRecette, fetchSiteConfig } from "@/lib/api";
 import { formatIngredientNatural } from "@/lib/format-ingredient";
-import { stepToTiming, sumTimings } from "@/lib/timing";
+import {
+  stepToTiming,
+  sumTimings,
+  activeDuration,
+  passiveDuration,
+  formatDuration,
+} from "@/lib/timing";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import ImageSlider from "@/components/ImageSlider";
-import { RecipeTiming } from "@/components/RecipeTiming";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -91,6 +96,29 @@ export default async function RecetteDetailPage({ params }: Props) {
           <span className="text-xs text-brun-light ml-2">Par {recette.auteur.nom}</span>
         </div>
 
+        {(() => {
+          // Aggregated timing summary as a single header line:
+          //   ⏲ Préparation : 30 min  •  Cuisson et repos : 1h45
+          // Each half is suppressed if its duration is empty; the whole
+          // line is hidden when no step has any timing.
+          const agg = sumTimings(
+            recette.etapes.map((e) => stepToTiming(e as unknown as Record<string, unknown>))
+          );
+          const active = formatDuration(activeDuration(agg));
+          const passive = formatDuration(passiveDuration(agg));
+          if (!active && !passive) return null;
+          return (
+            <p className="mt-3 text-sm text-brun-light flex flex-wrap items-center gap-x-3 gap-y-1">
+              <span aria-hidden>⏲</span>
+              {active && <span>Préparation : {active}</span>}
+              {active && passive && (
+                <span className="text-brun-light/40" aria-hidden>•</span>
+              )}
+              {passive && <span>Cuisson et repos : {passive}</span>}
+            </p>
+          );
+        })()}
+
         {recette.presentation && recette.presentation.replace(/<[^>]*>/g, "").trim() && (
           <div
             className="rich-content emphasis-green mt-8 text-brun-light leading-relaxed text-lg"
@@ -98,18 +126,6 @@ export default async function RecetteDetailPage({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: recette.presentation }}
           />
         )}
-
-        {/* Timing agrégé (somme des étapes) — affiché juste avant la
-            grille ingrédients/préparation. Automatiquement masqué si
-            aucune étape n'a de timing renseigné. */}
-        <div className="mt-8 max-w-md">
-          <RecipeTiming
-            timing={sumTimings(
-              recette.etapes.map((e) => stepToTiming(e as unknown as Record<string, unknown>))
-            )}
-            variant="full"
-          />
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-10">
           {/* Ingrédients */}
@@ -183,15 +199,9 @@ export default async function RecetteDetailPage({ params }: Props) {
               <div className="space-y-6">
                 {recette.etapes.map((etape, i) => (
                   <div key={i}>
-                    <div className="flex items-baseline gap-3 mb-2">
-                      <p className="text-xs font-medium text-terracotta uppercase tracking-wide">
-                        Étape {i + 1}{etape.titre ? ` — ${etape.titre}` : ""}
-                      </p>
-                      <RecipeTiming
-                        timing={stepToTiming(etape as unknown as Record<string, unknown>)}
-                        variant="compact"
-                      />
-                    </div>
+                    <p className="text-xs font-medium text-terracotta uppercase tracking-wide mb-2">
+                      Étape {i + 1}{etape.titre ? ` — ${etape.titre}` : ""}
+                    </p>
                     <div
                       className="rich-content text-brun-light leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: etape.texte }}
