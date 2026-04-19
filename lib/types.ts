@@ -97,7 +97,19 @@ export type Recette = {
   ingredients: { nom: string; nom_pluriel?: string | null; quantite: number; unite: string; unite_pluriel?: string | null; group_id?: string | null }[];
   ingredient_groups?: { id: string; titre: string; sort_order: number }[];
   instructions: string;
-  etapes: { titre?: string | null; texte: string; image_url?: string }[];
+  etapes: {
+    titre?: string | null;
+    texte: string;
+    image_url?: string;
+    // Timing (all nullable) — passed through from recipe_steps.
+    prep_minutes_min?: number | null;
+    prep_minutes_max?: number | null;
+    cook_minutes_min?: number | null;
+    cook_minutes_max?: number | null;
+    rest_minutes_min?: number | null;
+    rest_minutes_max?: number | null;
+    timing_notes?: string | null;
+  }[];
   photo_url?: string;
   photos?: string[];
   created_at: string;
@@ -177,6 +189,14 @@ export type ApiRecipe = {
     text: string;
     image_url: string | null;
     sort_order: number;
+    // Timing — all nullable. See admin's migration 20260419130000_recipe-steps-timing.sql.
+    prep_minutes_min: number | null;
+    prep_minutes_max: number | null;
+    cook_minutes_min: number | null;
+    cook_minutes_max: number | null;
+    rest_minutes_min: number | null;
+    rest_minutes_max: number | null;
+    timing_notes: string | null;
   }[];
   creator: { id: string; first_name: string; last_name: string } | null;
   recipe_teams: { team: { id: string; name: string } }[];

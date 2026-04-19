@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { fetchRecette, fetchSiteConfig } from "@/lib/api";
 import { formatIngredientNatural } from "@/lib/format-ingredient";
+import { stepToTiming, sumTimings } from "@/lib/timing";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import ImageSlider from "@/components/ImageSlider";
+import { RecipeTiming } from "@/components/RecipeTiming";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -97,6 +99,18 @@ export default async function RecetteDetailPage({ params }: Props) {
           />
         )}
 
+        {/* Timing agrégé (somme des étapes) — affiché juste avant la
+            grille ingrédients/préparation. Automatiquement masqué si
+            aucune étape n'a de timing renseigné. */}
+        <div className="mt-8 max-w-md">
+          <RecipeTiming
+            timing={sumTimings(
+              recette.etapes.map((e) => stepToTiming(e as unknown as Record<string, unknown>))
+            )}
+            variant="full"
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-10">
           {/* Ingrédients */}
           <div className="md:col-span-1">
@@ -169,9 +183,15 @@ export default async function RecetteDetailPage({ params }: Props) {
               <div className="space-y-6">
                 {recette.etapes.map((etape, i) => (
                   <div key={i}>
-                    <p className="text-xs font-medium text-terracotta uppercase tracking-wide mb-2">
-                      Étape {i + 1}{etape.titre ? ` — ${etape.titre}` : ""}
-                    </p>
+                    <div className="flex items-baseline gap-3 mb-2">
+                      <p className="text-xs font-medium text-terracotta uppercase tracking-wide">
+                        Étape {i + 1}{etape.titre ? ` — ${etape.titre}` : ""}
+                      </p>
+                      <RecipeTiming
+                        timing={stepToTiming(etape as unknown as Record<string, unknown>)}
+                        variant="compact"
+                      />
+                    </div>
                     <div
                       className="rich-content text-brun-light leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: etape.texte }}
