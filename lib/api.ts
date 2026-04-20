@@ -109,6 +109,10 @@ function mapRecipe(r: ApiRecipe): Recette {
         unite: i.unit.abbreviation,
         unite_pluriel: i.unit.abbreviation_plural ?? null,
         group_id: i.group_id,
+        commentaire: i.comment ?? null,
+        rayon: i.aisle
+          ? { id: i.aisle.id, nom: i.aisle.name, color: i.aisle.color }
+          : null,
       })),
     ingredient_groups: (r.ingredient_groups ?? [])
       .slice()

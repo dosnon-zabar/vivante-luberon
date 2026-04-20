@@ -94,7 +94,18 @@ export type Recette = {
   seo_title?: string | null;
   seo_desc?: string | null;
   seo_image?: string | null;
-  ingredients: { nom: string; nom_pluriel?: string | null; quantite: number; unite: string; unite_pluriel?: string | null; group_id?: string | null }[];
+  ingredients: {
+    nom: string;
+    nom_pluriel?: string | null;
+    quantite: number;
+    unite: string;
+    unite_pluriel?: string | null;
+    group_id?: string | null;
+    /** Remarque libre saisie par le traiteur, ex: "bio de préférence". */
+    commentaire?: string | null;
+    /** Rayon de supermarché, utilisé par la popin "Liste de courses" pour grouper. */
+    rayon?: { id: string; nom: string; color: string } | null;
+  }[];
   ingredient_groups?: { id: string; titre: string; sort_order: number }[];
   instructions: string;
   etapes: {

@@ -12,6 +12,7 @@ import {
 } from "@/lib/timing";
 import ImageWithFallback from "@/components/ImageWithFallback";
 import ImageSlider from "@/components/ImageSlider";
+import ShoppingListButton from "@/components/ShoppingListButton";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -190,6 +191,10 @@ export default async function RecetteDetailPage({ params }: Props) {
                 Pas d&apos;ingrédients renseignés
               </p>
             )}
+
+            {/* Bouton popin "Liste de courses" — seulement si la recette
+                a au moins un ingrédient (géré dans le composant). */}
+            <ShoppingListButton recette={recette} />
           </div>
 
           {/* Préparation */}
