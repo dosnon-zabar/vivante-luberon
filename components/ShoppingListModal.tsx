@@ -159,6 +159,78 @@ export default function ShoppingListModal({ open, onClose, recette, aisles }: Pr
     })
   }, [recette.ingredients, aislesById, multiplier])
 
+  // État du formulaire d'envoi email — inline dans la modal (pas de
+  // sous-popin). Se révèle au clic sur "Envoyer par email".
+  const [emailMode, setEmailMode] = useState<"idle" | "form" | "sending" | "sent" | "error">("idle")
+  const [emailTo, setEmailTo] = useState("")
+  const [emailError, setEmailError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setEmailMode("idle")
+      setEmailTo("")
+      setEmailError(null)
+    }
+  }, [open])
+
+  async function handleSendEmail(e: React.FormEvent) {
+    e.preventDefault()
+    setEmailError(null)
+    const to = emailTo.trim()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+      setEmailError("Adresse email invalide.")
+      return
+    }
+
+    setEmailMode("sending")
+
+    // Sérialise les sections déjà formatées (on réutilise le même rendu
+    // que le DOM — cohérence côté email garantie).
+    const sections = grouped.map((g) => ({
+      rayon: g.rayon?.name ?? "Autres",
+      color: g.rayon?.color ?? null,
+      items: g.items.map((ing) => ({
+        line:
+          ing.scaledQty > 0
+            ? formatIngredientNatural(
+                ing.nom,
+                ing.scaledQty,
+                ing.unite,
+                ing.unite_pluriel,
+                ing.nom_pluriel,
+              )
+            : ing.nom,
+        note: ing.comments.length > 0 ? ing.comments.join(" ; ") : null,
+      })),
+    }))
+
+    try {
+      const res = await fetch("/api/shopping-list/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to_email: to,
+          recipe_name: recette.nom,
+          recipe_url:
+            typeof window !== "undefined" ? window.location.href : "",
+          portions,
+          portion_label: portionLabel,
+          groups: sections,
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data.success) {
+        setEmailError(data.error || "Envoi échoué, réessaye plus tard.")
+        setEmailMode("error")
+        return
+      }
+      setEmailMode("sent")
+    } catch {
+      setEmailError("Erreur réseau")
+      setEmailMode("error")
+    }
+  }
+
   if (!open) return null
 
   return (
@@ -277,15 +349,102 @@ export default function ShoppingListModal({ open, onClose, recette, aisles }: Pr
           )}
         </div>
 
-        <div className="mt-6">
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full py-2.5 bg-vert-eau text-white rounded-lg hover:bg-vert-eau-light transition-colors text-sm font-medium"
-          >
-            Fermer
-          </button>
-        </div>
+        {/* Bloc email — 3 états :
+            - idle : 2 boutons Envoyer par email / Fermer
+            - form : input email + Envoyer / Annuler
+            - sent : message succès + Fermer
+         */}
+        {emailMode === "sent" ? (
+          <div className="mt-6 space-y-3">
+            <div className="flex items-start gap-2 bg-vert-eau-light/30 border border-vert-eau/30 rounded-lg px-3 py-2.5">
+              <svg
+                className="w-5 h-5 text-vert-eau flex-shrink-0 mt-0.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              <div className="text-sm text-brun">
+                Liste envoyée à <strong>{emailTo}</strong>. Vérifie ton
+                dossier spam si tu ne la reçois pas dans quelques minutes.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full py-2.5 bg-vert-eau text-white rounded-lg hover:bg-vert-eau-light transition-colors text-sm font-medium"
+            >
+              Fermer
+            </button>
+          </div>
+        ) : emailMode === "form" || emailMode === "sending" || emailMode === "error" ? (
+          <form onSubmit={handleSendEmail} className="mt-6 space-y-3">
+            <label className="block text-sm font-medium text-brun">
+              Envoyer cette liste par email
+            </label>
+            <input
+              type="email"
+              required
+              autoFocus
+              value={emailTo}
+              onChange={(e) => {
+                setEmailTo(e.target.value)
+                setEmailError(null)
+                if (emailMode === "error") setEmailMode("form")
+              }}
+              placeholder="votre@email.com"
+              className="w-full px-3 py-2.5 rounded-lg border border-brun/10 bg-creme text-sm text-brun placeholder:text-brun-light/40 focus:outline-none focus:ring-2 focus:ring-vert-eau/30"
+              disabled={emailMode === "sending"}
+            />
+            {emailError && (
+              <p className="text-xs text-rose">{emailError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setEmailMode("idle")
+                  setEmailError(null)
+                }}
+                disabled={emailMode === "sending"}
+                className="flex-1 py-2.5 border border-brun/10 text-brun rounded-lg hover:bg-creme transition-colors text-sm font-medium disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={emailMode === "sending"}
+                className="flex-1 py-2.5 bg-vert-eau text-white rounded-lg hover:bg-vert-eau-light transition-colors text-sm font-medium disabled:opacity-60"
+              >
+                {emailMode === "sending" ? "Envoi…" : "Envoyer"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-6 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setEmailMode("form")}
+              className="flex-1 py-2.5 border border-brun/10 text-brun rounded-lg hover:bg-creme transition-colors text-sm font-medium"
+            >
+              Envoyer par email
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2.5 bg-vert-eau text-white rounded-lg hover:bg-vert-eau-light transition-colors text-sm font-medium"
+            >
+              Fermer
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
