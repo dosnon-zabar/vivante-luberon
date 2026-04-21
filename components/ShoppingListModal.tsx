@@ -77,9 +77,23 @@ export default function ShoppingListModal({ open, onClose, recette, aisles }: Pr
   }, [aisles])
 
   /**
-   * Résultat : tableau de sections, chaque section = un rayon-feuille
-   * (ou "Autres"), avec ses ingrédients déjà fusionnés. Sections triées
-   * dans l'ordre de course : parent.sort_order → own.sort_order → nom.
+   * Résultat : tableau de sections. Chaque section = un rayon PARENT
+   * (ou le rayon lui-même s'il n'a pas de parent, ou "Autres"). Les
+   * items sont triés à l'intérieur par (sous-rayon.sort_order,
+   * sous-rayon.nom) pour que ceux du même sous-rayon restent
+   * contigus, même si le sous-rayon n'apparait pas à l'écran.
+   *
+   * Exemple :
+   *   Primeurs (parent)
+   *     – 200 g d'oignons       (sous-rayon Légumes sort=1)
+   *     – 2 gousses d'ail       (sous-rayon Légumes sort=1)
+   *     – 10 g de persil        (sous-rayon Herbes sort=3)
+   *   Crémerie (parent)
+   *     – 100 g de beurre       (sous-rayon Beurre sort=1)
+   *     – 2 œufs                (sous-rayon Œufs sort=6)
+   *
+   * Les couleurs et noms affichés sont ceux du PARENT (ou du rayon
+   * lui-même s'il est déjà top-level).
    */
   const grouped = useMemo(() => {
     type Merged = {
@@ -123,39 +137,57 @@ export default function ShoppingListModal({ open, onClose, recette, aisles }: Pr
       }
     }
 
-    // 2. Group by rayon id (leaf).
-    const byRayon = new Map<
-      string,
-      { rayon: Aisle | null; items: Merged[] }
-    >()
+    /**
+     * Résout le rayon PARENT d'affichage pour un leaf aisle.
+     * - leaf avec parent        → parent
+     * - leaf sans parent        → le leaf lui-même (top-level)
+     * - leaf introuvable / null → null (bucket "Autres")
+     */
+    function resolveDisplayParent(leafId: string | null): Aisle | null {
+      if (!leafId) return null
+      const leaf = aislesById.get(leafId)
+      if (!leaf) return null
+      if (!leaf.parent_id) return leaf
+      return aislesById.get(leaf.parent_id) ?? leaf
+    }
+
+    // 2. Group by display parent (ou "Autres" si pas de rayon).
+    type Bucket = {
+      parent: Aisle | null
+      items: Array<Merged & { leaf: Aisle | null }>
+    }
+    const byParent = new Map<string, Bucket>()
     for (const m of mergedMap.values()) {
-      const rayon = m.rayonId ? aislesById.get(m.rayonId) ?? null : null
-      const key = rayon?.id ?? "__autres__"
-      const bucket = byRayon.get(key) ?? { rayon, items: [] }
-      bucket.items.push(m)
-      byRayon.set(key, bucket)
+      const parent = resolveDisplayParent(m.rayonId)
+      const leaf = m.rayonId ? aislesById.get(m.rayonId) ?? null : null
+      const key = parent?.id ?? "__autres__"
+      const bucket = byParent.get(key) ?? { parent, items: [] }
+      bucket.items.push({ ...m, leaf })
+      byParent.set(key, bucket)
     }
 
-    // 3. Sort key for each rayon: (parent.sort_order, own.sort_order, own.name).
-    //    Rayons without parent use their own sort_order as the "parent" slot
-    //    so top-level aisles can interleave naturally with children of other
-    //    parents. "Autres" always last.
-    function sortKey(rayon: Aisle | null): [number, number, string] {
-      if (!rayon) return [Number.MAX_SAFE_INTEGER, 0, ""]
-      const parent = rayon.parent_id ? aislesById.get(rayon.parent_id) : null
-      const parentSort = parent
-        ? parent.sort_order ?? 0
-        : rayon.sort_order ?? 0
-      const ownSort = parent ? rayon.sort_order ?? 0 : 0
-      return [parentSort, ownSort, rayon.name]
+    // 3. Tri des items DANS un bucket : par (leaf.sort_order, leaf.nom).
+    //    Les items du même sous-rayon restent contigus — c'est le but.
+    for (const b of byParent.values()) {
+      b.items.sort((a, b) => {
+        const aSort = a.leaf?.sort_order ?? 0
+        const bSort = b.leaf?.sort_order ?? 0
+        if (aSort !== bSort) return aSort - bSort
+        const aName = a.leaf?.name ?? ""
+        const bName = b.leaf?.name ?? ""
+        return aName.localeCompare(bName, "fr") || a.nom.localeCompare(b.nom, "fr")
+      })
     }
 
-    return [...byRayon.values()].sort((a, b) => {
-      const ka = sortKey(a.rayon)
-      const kb = sortKey(b.rayon)
-      if (ka[0] !== kb[0]) return ka[0] - kb[0]
-      if (ka[1] !== kb[1]) return ka[1] - kb[1]
-      return ka[2].localeCompare(kb[2], "fr")
+    // 4. Tri des buckets : parent.sort_order, "Autres" toujours en dernier.
+    return [...byParent.values()].sort((a, b) => {
+      if (!a.parent && !b.parent) return 0
+      if (!a.parent) return 1
+      if (!b.parent) return -1
+      const aSort = a.parent.sort_order ?? 0
+      const bSort = b.parent.sort_order ?? 0
+      if (aSort !== bSort) return aSort - bSort
+      return a.parent.name.localeCompare(b.parent.name, "fr")
     })
   }, [recette.ingredients, aislesById, multiplier])
 
@@ -184,11 +216,11 @@ export default function ShoppingListModal({ open, onClose, recette, aisles }: Pr
 
     setEmailMode("sending")
 
-    // Sérialise les sections déjà formatées (on réutilise le même rendu
-    // que le DOM — cohérence côté email garantie).
+    // Sérialise les sections déjà formatées — mêmes groupes parents et
+    // même ordre que le DOM (tri par sous-rayon interne préservé).
     const sections = grouped.map((g) => ({
-      rayon: g.rayon?.name ?? "Autres",
-      color: g.rayon?.color ?? null,
+      rayon: g.parent?.name ?? "Autres",
+      color: g.parent?.color ?? null,
       items: g.items.map((ing) => ({
         line:
           ing.scaledQty > 0
@@ -313,16 +345,16 @@ export default function ShoppingListModal({ open, onClose, recette, aisles }: Pr
             </p>
           ) : (
             grouped.map((g) => (
-              <section key={g.rayon?.id ?? "__autres__"}>
-                <h4 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brun-light mb-2">
-                  {g.rayon?.color && (
+              <section key={g.parent?.id ?? "__autres__"}>
+                <h4 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-brun mb-2">
+                  {g.parent?.color && (
                     <span
-                      className="w-2.5 h-2.5 rounded-full"
-                      style={{ backgroundColor: g.rayon.color }}
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: g.parent.color }}
                       aria-hidden
                     />
                   )}
-                  {g.rayon?.name ?? "Autres"}
+                  {g.parent?.name ?? "Autres"}
                 </h4>
                 <ul className="space-y-1.5">
                   {g.items.map((ing, i) => (
